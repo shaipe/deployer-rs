@@ -30,5 +30,17 @@ fn test(){
     
     let hello = x.wait_with_output().unwrap().stdout;
 
+    String::from_utf8(output.stdout)?
+        .lines()
+        .filter_map(|line| pattern.captures(line))
+        .map(|cap| {
+                 Commit {
+                     hash: cap[1].to_string(),
+                     message: cap[2].trim().to_string(),
+                 }
+             })
+        .take(5)
+        .for_each(|x| println!("{:?}", x));
+
     println!("{:?}", std::str::from_utf8(&hello).unwrap());
 }
