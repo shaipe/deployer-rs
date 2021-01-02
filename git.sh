@@ -17,7 +17,7 @@ git pull
 git push
 # 同时推送到github
 # git push github
-# git push mygit
+git push mygit
 
 echo "git commit and push success"
 
