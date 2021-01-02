@@ -44,3 +44,7 @@ fn test(){
 
     println!("{:?}", std::str::from_utf8(&hello).unwrap());
 }
+
+fn run_cmd() {
+    
+}
