@@ -4,3 +4,6 @@
 *.lock
 *.zip
 *.yml
+*.png
+tmp/
+*.txt

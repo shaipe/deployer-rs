@@ -11,16 +11,20 @@ use tube_error::Error;
 use std::io::Write;
 
 use actix_multipart::Multipart;
-use actix_web::{middleware, web, App, Error as ActixError, HttpResponse, HttpServer};
+use actix_web::{middleware, web, App, Error as ActixError, HttpRequest, HttpResponse, HttpServer};
 use futures::{StreamExt, TryStreamExt};
 
 mod config;
 use config::Config;
 
-async fn save_file(mut payload: Multipart) -> Result<HttpResponse, ActixError> {
+async fn save_file(req: HttpRequest, mut payload: Multipart) -> Result<HttpResponse, ActixError> {
+    println!("{:?}", req);
     // iterate over multipart stream
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
+
+        println!("content type {:?}", content_type);
+
         let filename = content_type.get_filename().unwrap();
         let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
 
@@ -66,7 +70,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    println!("config {:?}",conf);
+    println!("config {:?}", conf);
 
     let ip = format!("{}:{}", conf.server.ip, conf.server.port);
     println!("{:?}", ip);

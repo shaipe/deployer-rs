@@ -27,7 +27,7 @@ fn open_url(urls: String) {
         .output()
         .expect("failed to execute process");
     match String::from_utf8(o.stdout) {
-        Ok(v) => println!("open url success"),
+        Ok(_v) => println!("open url success"),
         Err(e) => panic!("Fail to open url {}", e),
     };
     

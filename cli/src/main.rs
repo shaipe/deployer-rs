@@ -5,10 +5,12 @@
 use clap::{crate_authors, crate_description, crate_version, App, AppSettings, Arg};
 use std::error::Error;
 
-// #[macro_use]
-// extern crate clap;
+
 mod config;
 use config::Config;
+
+// mod upload;
+// use upload::upload_file;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = App::new("dcli")
@@ -24,19 +26,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // .help("set name of program")
                 .takes_value(true),
         )
-        // .subcommands(vec![
-        //     SubCommand::new("init")
-        //         .about("Create a new Zola project")
-        //         .args(&[
-        //             Arg::new("name")
-        //                 .default_value(".")
-        //                 // .help("Name of the project. Will create a new directory with that name in the current directory"),
-        //             Arg::new("force")
-        //                 .short("f")
-        //                 .takes_value(false)
-        //                 // .help("Force creation of project even if directory is non-empty")
-        //         ])
-        // ])
+        .subcommand(App::new("test")
+            .about("controls testing features")
+            .version("1.3")
+            .author("Someone E. <someone_else@other.com>")
+            .arg(Arg::new("debug")
+                .short('d')
+                .about("print debug information verbosely")))
         .get_matches();
 
     let conf_path = matches.value_of("config").unwrap_or("conf/cli.yml");
@@ -48,6 +44,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     println!("c::{:?}", c);
+
+    // upload_file();
 
     // match matches.values_of("name") {
     //     None => {}
