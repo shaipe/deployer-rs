@@ -2,16 +2,22 @@
 //! 服务端应用
 //! create by shaipe 20210102
 
+#[macro_use]
+extern crate tube_error;
+
+// 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
+use tube_error::Error;
+
 use std::io::Write;
 
 use actix_multipart::Multipart;
-use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
+use actix_web::{middleware, web, App, Error as ActixError, HttpResponse, HttpServer};
 use futures::{StreamExt, TryStreamExt};
 
 mod config;
+use config::Config;
 
-
-async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
+async fn save_file(mut payload: Multipart) -> Result<HttpResponse, ActixError> {
     // iterate over multipart stream
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
@@ -52,7 +58,18 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
     std::fs::create_dir_all("./tmp").unwrap();
 
-    let ip = "0.0.0.0:3000";
+    let conf = match Config::new("conf/server.yml") {
+        Ok(conf) => conf,
+        Err(e) => {
+            println!("{:?}", e);
+            Config::default()
+        }
+    };
+
+    println!("config {:?}",conf);
+
+    let ip = format!("{}:{}", conf.server.ip, conf.server.port);
+    println!("{:?}", ip);
 
     HttpServer::new(|| {
         App::new().wrap(middleware::Logger::default()).service(
