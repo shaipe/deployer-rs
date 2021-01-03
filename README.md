@@ -30,3 +30,10 @@ cli --> 发送命令
 - 框架： Actix
 
 
+### examples
+
+添加
+a add core https://www.google.com
+
+打开
+a open core

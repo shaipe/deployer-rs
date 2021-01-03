@@ -1,8 +1,15 @@
+//! copyright © shaipe 2021 - present
+//! 服务端应用
+//! create by shaipe 20210102
+
 use std::io::Write;
 
 use actix_multipart::Multipart;
 use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer};
 use futures::{StreamExt, TryStreamExt};
+
+mod config;
+
 
 async fn save_file(mut payload: Multipart) -> Result<HttpResponse, Error> {
     // iterate over multipart stream

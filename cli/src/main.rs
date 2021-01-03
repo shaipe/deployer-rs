@@ -2,8 +2,7 @@
 //! 服务部署器客户端工具
 //! create by shaipe 20210102
 
-
-use clap::{App, Arg};
+use clap::{crate_authors, crate_description, crate_version, App, AppSettings, Arg};
 use std::error::Error;
 
 // #[macro_use]
@@ -12,33 +11,40 @@ mod config;
 use config::Config;
 
 fn main() -> Result<(), Box<dyn Error>> {
-
-    // let yaml = load_yaml!("../cli.yml");
-    // let matches = App::from_yaml(yaml).get_matches();
-
-    // println!("{:?}", matches);
-
     let matches = App::new("dcli")
-        .version(clap::crate_version!())
-        .author("shaipe")
-        .about("deployer of client program")
+        .version(crate_version!())
+        .author(crate_authors!())
+        .about(crate_description!())
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .arg(
-            Arg::with_name("config")
-                .short("c")
+            Arg::new("config")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
-                .help("set name of program")
+                // .help("set name of program")
                 .takes_value(true),
         )
+        // .subcommands(vec![
+        //     SubCommand::new("init")
+        //         .about("Create a new Zola project")
+        //         .args(&[
+        //             Arg::new("name")
+        //                 .default_value(".")
+        //                 // .help("Name of the project. Will create a new directory with that name in the current directory"),
+        //             Arg::new("force")
+        //                 .short("f")
+        //                 .takes_value(false)
+        //                 // .help("Force creation of project even if directory is non-empty")
+        //         ])
+        // ])
         .get_matches();
-
 
     let conf_path = matches.value_of("config").unwrap_or("conf/cli.yml");
     println!("Value for config: {}", conf_path);
 
-    let c = match Config::new(conf_path){
+    let c = match Config::new(conf_path) {
         Ok(c) => c,
-        Err(e) => panic!("ddd")
+        Err(e) => panic!("ddd"),
     };
 
     println!("c::{:?}", c);
