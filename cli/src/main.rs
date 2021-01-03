@@ -9,8 +9,8 @@ use std::error::Error;
 mod config;
 use config::Config;
 
-// mod upload;
-// use upload::upload_file;
+mod upload;
+use upload::upload_file;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = App::new("dcli")
@@ -40,12 +40,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let c = match Config::new(conf_path) {
         Ok(c) => c,
-        Err(e) => panic!("ddd"),
+        Err(_e) => panic!("ddd"),
     };
 
     println!("c::{:?}", c);
 
-    // upload_file();
+    let _ = upload_file();
 
     // match matches.values_of("name") {
     //     None => {}

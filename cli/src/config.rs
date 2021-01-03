@@ -29,8 +29,10 @@ impl Config {
         let docs = yaml::YamlLoader::load_from_str(&s).unwrap();
         // get first yaml hash doc
         let yaml_doc = &docs[0];
+
+        println!("{:?}", yaml_doc);
         // get server value
-        let server = yaml_doc["server"].clone().into_string().unwrap();
+        let server = yaml_doc["server"]["ip"].clone().into_string().unwrap();
                 
         Ok(Config {
             server
