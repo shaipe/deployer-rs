@@ -8,40 +8,13 @@ extern crate tube_error;
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 use tube_error::Error;
 
-use std::io::Write;
-
-use actix_multipart::Multipart;
-use actix_web::{middleware, web, App, Error as ActixError, HttpRequest, HttpResponse, HttpServer};
-use futures::{StreamExt, TryStreamExt};
+use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
 mod config;
 use config::Config;
 
-async fn save_file(req: HttpRequest, mut payload: Multipart) -> Result<HttpResponse, ActixError> {
-    println!("{:?}", req);
-    // iterate over multipart stream
-    while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition().unwrap();
-
-        println!("content type {:?}", content_type);
-
-        let filename = content_type.get_filename().unwrap();
-        let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
-
-        // File::create is blocking operation, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath))
-            .await
-            .unwrap();
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write_all(&data).map(|_| f)).await?;
-        }
-    }
-    Ok(HttpResponse::Ok().into())
-}
+mod upload;
+use upload::upload_handler;
 
 fn index() -> HttpResponse {
     let html = r#"<html>
@@ -79,7 +52,7 @@ async fn main() -> std::io::Result<()> {
         App::new().wrap(middleware::Logger::default()).service(
             web::resource("/")
                 .route(web::get().to(index))
-                .route(web::post().to(save_file)),
+                .route(web::post().to(upload_handler)),
         )
     })
     .bind(ip)?

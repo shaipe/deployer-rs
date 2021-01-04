@@ -9,7 +9,7 @@ const URL: &'static str = "http://localhost:3000";
 pub fn upload_file() -> Result<(), reqwest::Error> {
     let form = multipart::Form::new()
         // Adding just a simple text field...
-        // .text("username", "seanmonstar")
+        .text("username", "seanmonstar")
         // And a file...
         .file("photo", "photo.png")
         .unwrap();
