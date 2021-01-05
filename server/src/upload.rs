@@ -18,18 +18,20 @@ pub async fn upload_handler(
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
 
-        println!("content type {:?}", field);
+        // println!("content type {:?}", field);
 
-        let filename = match content_type.get_filename() {
-            Some(filename) => filename,
+        // 获取文件名
+        let file_name = match content_type.get_filename() {
+            Some(file_name) => file_name,
             None => "",
         };
 
-        if filename.is_empty() {
+        // 判断文件名称是否为空
+        if file_name.is_empty() {
             continue;
         }
 
-        let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
+        let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&file_name));
 
         // File::create is blocking operation, use threadpool
         let mut f = web::block(|| std::fs::File::create(filepath))
