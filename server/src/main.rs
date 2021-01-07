@@ -7,14 +7,13 @@ extern crate tube_error;
 
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 use tube_error::Error;
-
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_multipart::Multipart;
+use actix_web::{middleware, web, App, Error as ActixError, HttpRequest, HttpResponse, HttpServer};
 
 mod config;
 use config::Config;
 
-mod upload;
-use upload::upload_handler;
+use oss::save_file;
 
 fn index() -> HttpResponse {
     let html = r#"<html>
@@ -30,10 +29,22 @@ fn index() -> HttpResponse {
     HttpResponse::Ok().body(html)
 }
 
+pub async fn upload_handler(
+    req: HttpRequest,
+    payload: Multipart,
+    // srv: web::Data<Addr<ws::WsServer>>,
+) -> Result<HttpResponse, ActixError> {
+    println!("{:?}", req);
+
+    let x = save_file(req, payload, "userfiles").await;
+    println!("{:?}", x);
+    Ok(HttpResponse::Ok().into())
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
-    std::fs::create_dir_all("./tmp").unwrap();
+    // std::fs::create_dir_all("./tmp").unwrap();
 
     let conf = match Config::new("conf/server.yml") {
         Ok(conf) => conf,
@@ -43,10 +54,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    println!("config {:?}", conf);
-
     let ip = format!("{}:{}", conf.server.ip, conf.server.port);
-    println!("{:?}", ip);
 
     HttpServer::new(|| {
         App::new().wrap(middleware::Logger::default()).service(
