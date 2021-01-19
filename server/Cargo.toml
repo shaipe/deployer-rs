@@ -14,6 +14,7 @@ sanitize-filename = "0.3.0"
 yaml-rust = "0.4.4"
 tube_error = {version="0.1.0", path="../../tube/error"}
 oss = {version="0.1.0", path="../../oss"}
+tube_cmd = {version="0.1.0", path="../../tube/cmd"}
 
 [[bin]]
 name = "dserver"
