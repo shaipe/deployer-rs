@@ -4,6 +4,7 @@
 
 #[macro_use]
 extern crate tube_error;
+extern crate oss;
 
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 use actix_multipart::Multipart;
@@ -15,6 +16,7 @@ use config::Config;
 use tube_cmd::Command;
 
 use oss::save_file;
+mod upload;
 
 async fn index() -> HttpResponse {
     // Begin readme example
@@ -52,16 +54,27 @@ async fn index() -> HttpResponse {
     HttpResponse::Ok().body(html)
 }
 
+use tube_web::response;
+
 pub async fn upload_handler(
     req: HttpRequest,
     payload: Multipart,
     // srv: web::Data<Addr<ws::WsServer>>,
 ) -> Result<HttpResponse, ActixError> {
     println!("{:?}", req);
-
-    let x = save_file(req, payload, "userfiles").await;
-    println!("{:?}", x);
-    Ok(HttpResponse::Ok().into())
+    use tube_value::{Value,ToValue};
+    match save_file(req, payload, "userfiles").await {
+        Ok((res, _forms)) => {
+            if res.len() <2 {
+                response::get_success(&res[0].to_value())
+            }
+            else{
+                response::get_success(&Value::Null)
+            }
+        },
+        Err(e) => response::get_error(e)
+    }
+   
 }
 
 #[actix_web::main]
