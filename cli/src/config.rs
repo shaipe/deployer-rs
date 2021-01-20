@@ -33,8 +33,12 @@ pub struct Remote {
     // pub path: String,
     // 工作目录
     pub workdir: String,
-    // 远程需要执行的命令
-    pub commands: Vec<String>,
+
+    // 远程开始执行的命令
+    pub start_cmd: Vec<String>,
+
+    // 远程完成后执行命令
+    pub end_cmd: Vec<String>,
 }
 
 /// 本地信息配置
@@ -89,12 +93,29 @@ impl Config {
                 } else {
                     "./".to_owned()
                 },
-                commands: if let Some(dir) = remote["commands"].as_vec() {
-                    dir.iter().map(|x|if let Some(y) = x.as_str(){
-                        y.to_owned()
-                    }else{
-                        "".to_owned()
-                    }).collect()
+                start_cmd: if let Some(dir) = remote["commands"]["start"].as_vec() {
+                    dir.iter()
+                        .map(|x| {
+                            if let Some(y) = x.as_str() {
+                                y.to_owned()
+                            } else {
+                                "".to_owned()
+                            }
+                        })
+                        .collect()
+                } else {
+                    vec![]
+                },
+                end_cmd: if let Some(cmds) = remote["commands"]["end"].as_vec() {
+                    cmds.iter()
+                        .map(|x| {
+                            if let Some(y) = x.as_str() {
+                                y.to_owned()
+                            } else {
+                                "".to_owned()
+                            }
+                        })
+                        .collect()
                 } else {
                     vec![]
                 },
@@ -106,20 +127,28 @@ impl Config {
                     "./".to_owned()
                 },
                 start_cmd: if let Some(cmds) = local["commands"]["start"].as_vec() {
-                    cmds.iter().map(|x|if let Some(y) = x.as_str(){
-                        y.to_owned()
-                    }else{
-                        "".to_owned()
-                    }).collect()
+                    cmds.iter()
+                        .map(|x| {
+                            if let Some(y) = x.as_str() {
+                                y.to_owned()
+                            } else {
+                                "".to_owned()
+                            }
+                        })
+                        .collect()
                 } else {
                     vec![]
                 },
                 end_cmd: if let Some(cmds) = local["commands"]["end"].as_vec() {
-                    cmds.iter().map(|x|if let Some(y) = x.as_str(){
-                        y.to_owned()
-                    }else{
-                        "".to_owned()
-                    }).collect()
+                    cmds.iter()
+                        .map(|x| {
+                            if let Some(y) = x.as_str() {
+                                y.to_owned()
+                            } else {
+                                "".to_owned()
+                            }
+                        })
+                        .collect()
                 } else {
                     vec![]
                 },
@@ -145,7 +174,8 @@ impl std::default::Default for Config {
             remote: Remote {
                 uri: "http://127.0.0.1/cmd".to_owned(),
                 workdir: "./".to_owned(),
-                commands: vec![],
+                start_cmd: vec![],
+                end_cmd: vec![],
             },
             local: Local {
                 workdir: "./".to_owned(),

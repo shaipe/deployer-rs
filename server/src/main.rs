@@ -90,19 +90,22 @@ async fn cmd_handler(
     if let Ok(s) = std::str::from_utf8(&body) {
         let val: serde_json::Value = serde_json::from_str(s).unwrap();
 
-        // 1. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
-        // 2. 指行命令来重新启动服务
-        if let Some(cmds) = val["commands"].as_array() {
-            let env_dir = match val["workdir"].as_str() {
-                Some(x) => x,
-                None => "./",
-            };
-            let mut res = Vec::new();
+        // println!("{:?}", val);
+
+        let env_dir = match val["workdir"].as_str() {
+            Some(x) => x,
+            None => "./",
+        };
+
+        let mut res = Vec::new();
+
+        // 1. 对文件进行解压前的命令处理
+        if let Some(cmds) = val["startCommand"].as_array() {
             for cmd in cmds {
                 if let Some(c) = cmd.as_str() {
                     match run_cmd(c, env_dir, true) {
                         Ok(t) => {
-                            let tc:Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                            let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
                             res.extend(tc);
                         }
                         Err(err) => {
@@ -111,8 +114,38 @@ async fn cmd_handler(
                     }
                 }
             }
-            return response::get_success(&tube_value::value!(res));
         }
+        // println!("env:: {}, {:?}", env_dir, val["data"]["relativePath"]);
+        // 2. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
+        if let Some(p) = val["data"]["relativePath"].as_str() {
+            if p.len() > 1 {
+                // println!("server unzip {:?}, {:?}",p, env_dir);
+                match tube::unzip(p, env_dir) {
+                    Ok(_) => {}
+                    Err(err) => res.push(format!("error: {}", err)),
+                };
+            }
+        }
+
+        // 3. 指行命令来重新启动服务
+        if let Some(cmds) = val["endCommand"].as_array() {
+            for cmd in cmds {
+                if let Some(c) = cmd.as_str() {
+                    match run_cmd(c, env_dir, true) {
+                        Ok(t) => {
+                            let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                            res.extend(tc);
+                        }
+                        Err(err) => {
+                            res.push(format!("error: {}", err));
+                        }
+                    }
+                }
+            }
+        }
+
+        // 返回执行结果
+        return response::get_success(&tube_value::value!(res));
     }
 
     // let hello = match Command::with_args("bash", &["-c", "ls ; sleep 2; ls"])

@@ -64,8 +64,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. 复制并上传文件
     // remote::upload_img();
-    // let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
-    let f_str = "/Users/shaipe/Documents/xlsx/order.csv";
+    let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
+    // let f_str = "/Users/shaipe/Documents/xlsx/order.csv";
     let f_path = Path::new(&f_str);
     let name = f_path.file_stem().unwrap().to_str().unwrap();
     let up_res = upload_file(&cnf.local.upload_url, name.to_owned(), f_path, None);
@@ -81,7 +81,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "data": {
                         "relativePath": res
                     },
-                    "commands": cnf.remote.commands
+                    "startCommand": cnf.remote.start_cmd,
+                    "endCommand": cnf.remote.end_cmd
                 }),
             );
             println!("{:?}", yy);
