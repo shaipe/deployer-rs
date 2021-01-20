@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::result::Result;
 use yaml_rust::yaml;
-use std::path::Path;
+// use std::path::Path;
 
 /// 配置信息
 #[derive(Debug, Clone)]

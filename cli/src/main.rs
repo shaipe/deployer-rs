@@ -1,11 +1,11 @@
 //! copyright © shaipe 2021 - present
 //! 服务部署器客户端工具
 //! create by shaipe 20210102
-#[macro_use]
-extern crate tube_error;
+// #[macro_use]
+// extern crate tube_error;
 
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
-use tube_error::Error;
+// use tube_error::Error;
 
 use clap::{crate_authors, crate_description, crate_version, App, Arg};
 
@@ -17,10 +17,7 @@ use remote::upload_file;
 
 mod cmd;
 
-use std::fs::{copy, create_dir_all};
-use std::path::{Path, PathBuf};
-
-
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 获取命令行参数
@@ -67,13 +64,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. 复制并上传文件
     // remote::upload_img();
-    let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
+    // let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
+    let f_str = "/Users/shaipe/Documents/xlsx/order.csv";
     let f_path = Path::new(&f_str);
     let name = f_path.file_stem().unwrap().to_str().unwrap();
     let up_res = upload_file(&cnf.local.upload_url, name.to_owned(), f_path, None);
-    println!("{:?}", up_res);
 
+    // 判断上传是否成功
     // 3. 调用执行远端命令
+    if let Ok(res) = up_res {
+        if res.len() > 0 {
+            let yy = remote::call_remote(
+                &cnf.remote.uri,
+                serde_json::json!({
+                    "workdir": cnf.remote.workdir,
+                    "data": {
+                        "relativePath": res
+                    },
+                    "commands": cnf.remote.commands
+                }),
+            );
+            println!("{:?}", yy);
+        }
+    }
 
     // 4. 完成后执行的本地命令
     for lc in cnf.local.end_cmd {
@@ -87,12 +100,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
 // fn copy_file(
 //     src: &Path,
 //     dest: &PathBuf,
 //     base_path: &PathBuf,
 // ) -> Result<(), Box<dyn std::error::Error>> {
+// use std::fs::{copy, create_dir_all};
+// use std::path::{Path, PathBuf};
 //     let relative_path = src.strip_prefix(base_path).unwrap();
 //     let target_path = dest.join(relative_path);
 

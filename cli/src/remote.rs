@@ -13,8 +13,8 @@ pub fn upload_file(
     name: String,
     file_path: &Path,
     map: Option<HashMap<String, String>>,
-) -> Result<(), reqwest::Error> {
-    println!("url: {}, name: {}, file_path: {:?}", uri, name, file_path);
+) -> Result<String, reqwest::Error> {
+    // println!("url: {}, name: {}, file_path: {:?}", uri, name, file_path);
     let mut form = multipart::Form::new().file(name, file_path).unwrap();
 
     if let Some(m) = map {
@@ -41,20 +41,58 @@ pub fn upload_file(
 
     // Compose a request
     let client = reqwest::blocking::Client::new();
-    let requestbuilder = client.post(&String::from(uri)).multipart(form);
+    let requestbuilder = client.post(uri).multipart(form);
 
     // Send request
     let mut response = requestbuilder.send().unwrap();
 
-    // Report
-    println!("status: {}", response.status());
-    let mut response_data: Vec<u8> = vec![];
-    response.read_to_end(&mut response_data).unwrap();
-    println!(
-        "response:\n{}",
-        std::str::from_utf8(&response_data).unwrap()
-    );
-    Ok(())
+    if response.status().as_u16() == 200 {
+        let mut response_data: Vec<u8> = vec![];
+        response.read_to_end(&mut response_data).unwrap();
+        let res = std::str::from_utf8(&response_data).unwrap();
+
+        // 转换为json_value
+        let val: serde_json::Value = serde_json::from_str(res).unwrap();
+
+        // 获取出上传后的相对路径
+        if val["result"].is_object() {
+            if let Some(s) = val["result"]["relativePath"].as_str() {
+                return Ok(s.to_owned());
+            }
+        }
+    }
+
+    Ok("".to_owned())
+}
+
+pub fn call_remote(uri: &str, params: serde_json::Value) -> Result<String, reqwest::Error> {
+    println!("cmd url: {:?}", uri);
+    // Compose a request
+    let client = reqwest::blocking::Client::new();
+    let requestbuilder = client.post(uri).json(&params);
+
+    // Send request
+    let mut response = requestbuilder.send().unwrap();
+
+    if response.status().as_u16() == 200 {
+        let mut response_data: Vec<u8> = vec![];
+        response.read_to_end(&mut response_data).unwrap();
+        let res = std::str::from_utf8(&response_data).unwrap();
+
+        // 转换为json_value
+        let val: serde_json::Value = serde_json::from_str(res).unwrap();
+
+        // 获取出上传后的相对路径
+        // if val["result"].is_object() {
+        //     if let Some(s) = val["result"]["relativePath"].as_str() {
+        //         return Ok(s.to_owned());
+        //     }
+        // }
+
+        println!("{:?}", val);
+    }
+
+    Ok("".to_owned())
 }
 
 // const URL: &'static str = "http://localhost:3000";

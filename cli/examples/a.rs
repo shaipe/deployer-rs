@@ -1,6 +1,4 @@
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate serde_json;
 
 use std::fs;
@@ -8,6 +6,7 @@ use std::io::Write;
 use clap::{Arg, App};
 use std::process::Command;
 use serde_json::Error;
+use serde::{Deserialize,Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Service {
