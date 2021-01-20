@@ -7,34 +7,53 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::result::Result;
 use yaml_rust::yaml;
+use std::path::Path;
 
 /// 配置信息
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub server: Server,
+    // 本地
     pub local: Local,
-    pub commands: Vec<String>,
+    // 服务器的配置信息
+    pub remote: Remote,
 }
 
 /// 服务器信息
 #[derive(Debug, Clone)]
-pub struct Server {
+pub struct Remote {
     // 服务器ip地址
-    pub ip: String,
-    // 服务端口
-    pub port: u16,
-    // 用户名
-    pub username: String,
-    // 密码
-    pub password: String,
-    // 上传的路径
-    pub path: String,
+    pub uri: String,
+    // // 服务端口
+    // pub port: u16,
+    // // 用户名
+    // pub username: String,
+    // // 密码
+    // pub password: String,
+    // // 上传的路径
+    // pub path: String,
+    // 工作目录
+    pub workdir: String,
+    // 远程需要执行的命令
+    pub commands: Vec<String>,
 }
 
 /// 本地信息配置
 #[derive(Debug, Clone)]
 pub struct Local {
-    pub home: String,
+    // 工作目录
+    pub workdir: String,
+
+    // 本地开始执行的命令
+    pub start_cmd: Vec<String>,
+
+    // 完成后执行命令
+    pub end_cmd: Vec<String>,
+
+    // 上传的url地址
+    pub upload_url: String,
+
+    // 需要上传的文件路径
+    pub upload_file: String,
 }
 
 impl Config {
@@ -54,29 +73,67 @@ impl Config {
         let yaml_doc = &docs[0];
 
         // println!("{:?}", yaml_doc);
-        // get server value
-        let server = yaml_doc["server"].clone();
+        // get remote value
+        let remote = yaml_doc["remote"].clone();
         let local = yaml_doc["local"].clone();
-        let cmds = yaml_doc["commands"].clone();
-
-        println!("server: {:?}", server);
-
-        println!("local: {:?}", local);
-
-        println!("commands: {:?}", cmds);
 
         Ok(Config {
-            server: Server {
-                ip: "0.0.0.0".to_owned(),
-                port: 3000,
-                username: "root".to_owned(),
-                password: "".to_owned(),
-                path: "/".to_owned(),
+            remote: Remote {
+                uri: if let Some(url) = remote["uri"].as_str() {
+                    url.to_owned()
+                } else {
+                    "http://127.0.0.1/cmd".to_owned()
+                },
+                workdir: if let Some(dir) = remote["workdir"].as_str() {
+                    dir.to_owned()
+                } else {
+                    "./".to_owned()
+                },
+                commands: if let Some(dir) = remote["commands"].as_vec() {
+                    dir.iter().map(|x|if let Some(y) = x.as_str(){
+                        y.to_owned()
+                    }else{
+                        "".to_owned()
+                    }).collect()
+                } else {
+                    vec![]
+                },
             },
             local: Local {
-                home: "/".to_owned(),
+                workdir: if let Some(dir) = local["workdir"].as_str() {
+                    dir.to_owned()
+                } else {
+                    "./".to_owned()
+                },
+                start_cmd: if let Some(cmds) = local["commands"]["start"].as_vec() {
+                    cmds.iter().map(|x|if let Some(y) = x.as_str(){
+                        y.to_owned()
+                    }else{
+                        "".to_owned()
+                    }).collect()
+                } else {
+                    vec![]
+                },
+                end_cmd: if let Some(cmds) = local["commands"]["end"].as_vec() {
+                    cmds.iter().map(|x|if let Some(y) = x.as_str(){
+                        y.to_owned()
+                    }else{
+                        "".to_owned()
+                    }).collect()
+                } else {
+                    vec![]
+                },
+                upload_url: if let Some(dir) = local["upload"]["uri"].as_str() {
+                    dir.to_owned()
+                } else {
+                    "http://127.0.0.1:8080/upload".to_owned()
+                },
+                upload_file: if let Some(dir) = local["upload"]["file"].as_str() {
+                    dir.to_owned()
+                } else {
+                    "name.zip".to_owned()
+                },
             },
-            commands: vec![],
         })
     }
 }
@@ -85,17 +142,18 @@ impl Config {
 impl std::default::Default for Config {
     fn default() -> Self {
         Config {
-            server: Server {
-                ip: "0.0.0.0".to_owned(),
-                port: 3000,
-                username: "root".to_owned(),
-                password: "".to_owned(),
-                path: "/".to_owned(),
+            remote: Remote {
+                uri: "http://127.0.0.1/cmd".to_owned(),
+                workdir: "./".to_owned(),
+                commands: vec![],
             },
             local: Local {
-                home: "/".to_owned(),
+                workdir: "./".to_owned(),
+                start_cmd: vec![],
+                end_cmd: vec![],
+                upload_url: "http://127.0.0.1/upload".to_owned(),
+                upload_file: "".to_owned(),
             },
-            commands: vec![],
         }
     }
 }

@@ -7,3 +7,5 @@
 *.png
 tmp/
 *.txt
+
+**/userfiles

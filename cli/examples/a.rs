@@ -68,9 +68,8 @@ fn main() {
         .subcommand(App::new("open")
             .about("open url when alert")
             .arg(
-                Arg::new("app")
+                Arg::with_name("app")
                     .value_name("APP NAME")
-                    .about("URL to be opened when opening the configured app alarm")
                     .required(true)
                     .takes_value(true)
             )
@@ -79,17 +78,15 @@ fn main() {
             App::new("add")
                 .about("add app to config")
                 .arg(
-                    Arg::new("app")
+                    Arg::with_name("app")
                         .value_name("APP NAME")
-                        .about("app name")
                         .required(true)
                         .takes_value(true)
                 )
                 .arg(
-                    Arg::new("urls")
+                    Arg::with_name("urls")
                         .value_name("URLS")
-                        .short('u')
-                        .about("Set urls for the app, if there are multiple, please use comma to separate")
+                        .short("u")
                 )
         )
         .get_matches();

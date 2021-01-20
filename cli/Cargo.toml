@@ -7,13 +7,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yaml-rust = "0.4.4"
-clap = "3.0.0-beta.2"
-serde = "1.0.112"
-serde_derive = "1.0.112"
-serde_json = "1.0.55"
-reqwest = {version="0.10.10", features=["blocking"]}
+yaml-rust = "0.4.5"
+clap = "2.33.3"
+serde = "1.0.120"
+serde_derive = "1.0.120"
+serde_json = "1.0.61"
+reqwest = { version = "0.11.0", features = ["blocking", "multipart"] }
 tube_error = {version="0.1.0", path="../../tube/error"}
+tube_cmd = {version="0.1.0", path="../../tube/cmd"}
 
 [[bin]]
 name = "dcli"
