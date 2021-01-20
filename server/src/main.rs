@@ -89,28 +89,47 @@ async fn cmd_handler(
 
     if let Ok(s) = std::str::from_utf8(&body) {
         let val: serde_json::Value = serde_json::from_str(s).unwrap();
-        // if let Some(cmds) = val["commands"].as_array(){
-        //     cmds.iter().map(|)
-        // }
-        println!("{:?}", val);
+
+        // 1. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
+        // 2. 指行命令来重新启动服务
+        if let Some(cmds) = val["commands"].as_array() {
+            let env_dir = match val["workdir"].as_str() {
+                Some(x) => x,
+                None => "./",
+            };
+            let mut res = Vec::new();
+            for cmd in cmds {
+                if let Some(c) = cmd.as_str() {
+                    match run_cmd(c, env_dir, true) {
+                        Ok(t) => {
+                            let tc:Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                            res.extend(tc);
+                        }
+                        Err(err) => {
+                            res.push(format!("error: {}", err));
+                        }
+                    }
+                }
+            }
+            return response::get_success(&tube_value::value!(res));
+        }
     }
 
-
-    let hello = match Command::with_args("bash", &["-c", "ls ; sleep 2; ls"])
-        .enable_capture()
-        .run()
-    {
-        Ok(s) => format!("{}", s.stdout_string_lossy()),
-        Err(e) => {
-            // println!("{:?}", e);
-            format!("{:?}", e.to_string())
-        }
-    };
-    println!("{:?}", hello);
+    // let hello = match Command::with_args("bash", &["-c", "ls ; sleep 2; ls"])
+    //     .enable_capture()
+    //     .run()
+    // {
+    //     Ok(s) => format!("{}", s.stdout_string_lossy()),
+    //     Err(e) => {
+    //         // println!("{:?}", e);
+    //         format!("{:?}", e.to_string())
+    //     }
+    // };
+    // println!("{:?}", hello);
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
-        .body(r#"{"error": "not support the GET method"}"#))
+        .body(r#"{"error": "not support method"}"#))
 }
 
 #[actix_web::main]
@@ -141,4 +160,29 @@ async fn main() -> std::io::Result<()> {
     .bind(ip)?
     .run()
     .await
+}
+
+/// 运行命令
+pub fn run_cmd(cmd: &str, env_dir: &str, enable_capture: bool) -> tube_error::Result<String> {
+    // let cmd = Command::with_args("bash", &["-c", "ls ; sleep 2; ls"]).set_dir(env_dir).add_args(&[cmd]);
+
+    let res = if enable_capture {
+        Command::with_args("bash", &["-c", cmd])
+            .set_dir(env_dir)
+            .enable_capture()
+            .run()
+    } else {
+        Command::with_args("bash", &["-c", cmd])
+            .set_dir(env_dir)
+            .run()
+    };
+
+    let hello = match res {
+        Ok(s) => format!("{}", s.stdout_string_lossy()),
+        Err(e) => {
+            // println!("{:?}", e);
+            format!("{:?}", e.to_string())
+        }
+    };
+    Ok(hello)
 }

@@ -78,7 +78,7 @@ pub fn call_remote(uri: &str, params: serde_json::Value) -> Result<String, reqwe
         let mut response_data: Vec<u8> = vec![];
         response.read_to_end(&mut response_data).unwrap();
         let res = std::str::from_utf8(&response_data).unwrap();
-
+        println!("response {:?}", res);
         // 转换为json_value
         let val: serde_json::Value = serde_json::from_str(res).unwrap();
 
