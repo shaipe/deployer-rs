@@ -8,6 +8,7 @@ extern crate oss;
 mod cmd;
 mod config;
 mod upload;
+mod git;
 
 use actix_web::{middleware, web, App, HttpServer};
 use config::Config;
@@ -83,6 +84,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .service(web::resource("/cmd").route(web::post().to(cmd::handler)))
+            .service(web::resource("/git").route(web::post().to(git::handler)))
             .service(
                 web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
             )
