@@ -49,15 +49,15 @@ pub async fn handler(
         }
         // println!("env:: {}, {:?}", env_dir, val["data"]["relativePath"]);
         // 2. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
-        if let Some(p) = val["data"]["relativePath"].as_str() {
-            if p.len() > 1 {
-                // println!("server unzip {:?}, {:?}",p, env_dir);
-                match tube::unzip(p, env_dir) {
-                    Ok(_) => {}
-                    Err(err) => res.push(format!("error: {}", err)),
-                };
-            }
-        }
+        // if let Some(p) = val["data"]["relativePath"].as_str() {
+        //     if p.len() > 1 {
+        //         // println!("server unzip {:?}, {:?}",p, env_dir);
+        //         match tube::unzip(p, env_dir) {
+        //             Ok(_) => {}
+        //             Err(err) => res.push(format!("error: {}", err)),
+        //         };
+        //     }
+        // }
 
         // 3. 指行命令来重新启动服务
         if let Some(cmds) = val["endCommand"].as_array() {

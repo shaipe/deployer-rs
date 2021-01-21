@@ -7,16 +7,13 @@
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 // use tube_error::Error;
 
-use clap::{crate_authors, crate_description, crate_version, App, Arg};
-
-mod config;
-use config::Config;
-
-mod remote;
-use remote::upload_file;
-
 mod cmd;
+mod config;
+mod remote;
 
+use clap::{crate_authors, crate_description, crate_version, App, Arg};
+use config::Config;
+use remote::upload_file;
 use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

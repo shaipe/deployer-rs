@@ -15,7 +15,7 @@ pub async fn handler(
 ) -> Result<HttpResponse, ActixError> {
     println!("{:?}", req);
     use tube_value::{ToValue, Value};
-    match save_file(req, payload, "userfiles").await {
+    match save_file(req, payload, "userfiles", false).await {
         Ok((res, _forms)) => {
             if res.len() < 2 {
                 response::get_success(&res[0].to_value())
