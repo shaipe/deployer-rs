@@ -22,6 +22,7 @@ tube_error = {version="0.1.0", path="../../tube/error"}
 tube_value = { version = "0.1.0", path = "../../tube/value"}
 tube_cmd = {version="0.1.0", path="../../tube/cmd"}
 tube_web = { version="0.1.0", path="../../tube/web"}
+deployer_service = { version="0.1.0", path="../service"}
 
 
 

@@ -55,6 +55,7 @@ async fn main() -> std::io::Result<()> {
     // 对子命令进行处理
     if sub_cmd.len() > 0 {
         if sub_cmd == "install" {
+            deployer_service::install_linux("dserver", " &", 30);
             println!("install");
         }
         else if sub_cmd == "uninstall" {
