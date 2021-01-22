@@ -11,6 +11,7 @@ use yaml_rust::yaml;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub server: Server,
+    pub workdir: String,
 }
 
 /// 服务器信息
@@ -42,12 +43,19 @@ impl Config {
         // get server value
         let server = yaml_doc["server"].clone();
 
-        Ok(Config {
+        let cnf =Config {
             server: Server {
                 ip: server["ip"].as_str().unwrap().to_owned(),
                 port: server["port"].as_i64().unwrap() as u64,
             },
-        })
+            workdir: if let Some(dir) = yaml_doc["workdir"].as_str() {
+                dir.to_owned()
+            } else {
+                "./".to_owned()
+            },
+        };
+        set_config(cnf.clone());
+        Ok(cnf)
     }
 }
 
@@ -59,6 +67,35 @@ impl std::default::Default for Config {
                 ip: "0.0.0.0".to_owned(),
                 port: 3000,
             },
+            workdir: "./".to_owned(),
         }
     }
+}
+
+use std::collections::HashMap;
+use std::sync::Mutex;
+
+// 默认加载静态全局
+lazy_static! {
+    pub static ref CONFIG_CACHES: Mutex<HashMap<String, Config>> = Mutex::new(HashMap::new());
+}
+
+/// 将创建的websocket服务器存入缓存中
+#[allow(dead_code)]
+pub fn set_config(conf: Config) {
+    CONFIG_CACHES
+        .lock()
+        .unwrap()
+        .insert("server_config".to_owned(), conf);
+}
+
+/// 获取websocket服务器
+#[allow(dead_code)]
+pub fn get_config() -> Option<Config> {
+    let cache = CONFIG_CACHES.lock().unwrap();
+    let v = match cache.get("server_config") {
+        Some(val) => Some(val.clone()),
+        _ => None,
+    };
+    return v;
 }

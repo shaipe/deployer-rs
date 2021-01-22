@@ -5,9 +5,15 @@
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 // use tube_cmd::Command;
 
+struct GitArgument {
+    workdir: String,
+    action: String,
+    arguments: Vec<String>,
+}
+
 /// 命令处理
 /// WebHook 简介 Gitee WebHook 功能是帮助用户 push 代码后，自动回调一个您设定的 http 地址。
-pub async fn handler(
+pub async fn hook_handler(
     _req: HttpRequest,
     mut payload: web::Payload,
 ) -> Result<HttpResponse, ActixError> {

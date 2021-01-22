@@ -5,10 +5,15 @@
 #[macro_use]
 extern crate tube_error;
 extern crate oss;
+
+#[macro_use]
+extern crate lazy_static;
+
 mod cmd;
 mod config;
 mod upload;
 mod git;
+mod app;
 
 use actix_web::{middleware, web, App, HttpServer};
 use config::Config;
@@ -81,14 +86,16 @@ async fn main() -> std::io::Result<()> {
     let ip = format!("{}:{}", conf.server.ip, conf.server.port);
 
     // 启动一个web服务
-    HttpServer::new(|| {
+    HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .service(web::resource("/cmd").route(web::post().to(cmd::handler)))
-            .service(web::resource("/git").route(web::post().to(git::handler)))
+            .service(web::resource("/git").route(web::post().to(git::hook_handler)))
             .service(
                 web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
             )
+            .data(conf.workdir.clone())
+            .configure(app::app_config)
     })
     .bind(ip)?
     .run()
