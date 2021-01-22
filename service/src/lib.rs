@@ -22,6 +22,8 @@ pub struct App {
 }
 
 impl App {
+    
+    /// 创建一个app微服务应用
     pub fn new() -> Self {
         App {
             symbol: "hawk".to_owned(),
@@ -30,11 +32,22 @@ impl App {
         }
     }
 
+    /// 获取jar应用名
     pub fn app_jar_name(&self) -> String {
         format!("{}_{}-{}.jar", self.symbol, self.name, self.version)
     }
 
-    /// 获取启动脚本
+    /// 获取java包启动脚本
+    /// # springboot应用程序部署脚本
+    /// # 在使用maven进持package打包时，修改应用的pom文件，
+    /// # <plugin>
+    /// #   <groupId>org.springframework.boot</groupId>
+    /// #   <artifactId>spring-boot-maven-plugin</artifactId>
+    /// #   <configuration>
+    /// #     <!-- 使用此配置之后打包的jar,可以直接使用./xxx.jar启动执行-->
+    /// #     <executable>true</executable>
+    /// #   </configuration>
+    /// # </plugin>
     pub fn get_jar_start_shell(&self, base_dir: &str) -> String {
         let app_dir = format!(
             "{workdir}/{symbol}/apps/{name}",
