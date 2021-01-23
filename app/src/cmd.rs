@@ -5,7 +5,7 @@
 
 
 /// 运行命令
-fn run_cmd(
+pub(crate) fn run_cmd(
     cmd: &str,
     env_dir: &str,
     enable_capture: bool,

@@ -4,16 +4,17 @@
 
 use serde::{Deserialize, Serialize};
 use tube_error::Result;
+use super::App;
 
 /// 应用池
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Pool {
+pub struct Pool {
     // 应用池名称
-    name: String,
+    pub name: String,
     // 应用池工作目录
-    workdir: String,
+    pub workdir: String,
     // 应用集
-    apps: Vec<App>,
+    pub apps: Vec<App>,
 }
 
 impl Pool {

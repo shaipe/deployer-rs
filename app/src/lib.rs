@@ -11,8 +11,13 @@ use tube_error::Error;
 
 mod service;
 mod cmd;
-
 mod app;
+mod pool;
+
+pub use service::Service;
+pub use app::App;
+pub use pool::Pool;
+
 
 #[cfg(test)]
 mod tests {

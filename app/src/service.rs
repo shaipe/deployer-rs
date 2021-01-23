@@ -30,6 +30,7 @@ impl Service {
 
     /// 服务安装
     pub fn install(&self) -> Result<bool> {
+        use super::cmd::run_cmd;
         if cfg!(target_os = "linux") {
             let path = format!("/lib/systemd/system/{name}.service", name = self.name);
             let srv_content = format!(
@@ -53,7 +54,10 @@ impl Service {
             );
             // 把文件写入服务
             tube::fs::write_file(&path, &srv_content.as_bytes());
-            return Ok(true);
+            // 设置应用为自启动
+            if let Ok(_r) = run_cmd(&format!("systemctl enable {}", self.name), "./", true) {
+                return Ok(true);
+            }
         } else if cfg!(target_os = "windows") {
             println!("Hello Windows");
         } else {

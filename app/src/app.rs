@@ -2,6 +2,7 @@
 //! 微服务应用管理
 //! create by shaipe 20210123
 
+use super::service;
 use serde::{Deserialize, Serialize};
 use tube_error::Result;
 
@@ -26,19 +27,30 @@ pub struct App {
 
 impl App {
     /// 新建应用对象
-    pub fn new(name: String) -> App {
+    pub fn new(base_dir: &str, symbol: &str, name: &str) -> App {
         App {
-            symbol: "".to_owned(),
-            name,
+            symbol: symbol.to_owned(),
+            name: name.to_owned(),
             description: "".to_owned(),
-            workdir: "./".to_owned(),
+            workdir: format!(
+                "{workdir}/{symbol}/apps/{name}",
+                workdir = base_dir,
+                symbol = symbol,
+                name = name
+            ),
             port: 7000,
             status: 0,
-            version: "".to_owned(),
+            version: "0.1.0".to_owned(),
         }
     }
 
-    pub fn install_service(&self) {}
+    /// 安装服务
+    pub fn install_service(&self) -> Result<bool> {
+        let srv_name = format!("{}_{}", self.symbol, self.name);
+        let cmd = format!("{}/start.sh &", self.workdir);
+        let srv = service::Service::new(&srv_name, &cmd, 180);
+        srv.install()
+    }
 
     /// 获取jar应用名
     pub fn app_name(&self) -> String {
@@ -60,24 +72,24 @@ impl App {
     /// #     <executable>true</executable>
     /// #   </configuration>
     /// # </plugin>
-    pub fn install_start_shell(&self, base_dir: &str) -> Result<String> {
+    pub fn install_start_shell(&self) -> Result<String> {
         if cfg!(feature = "java") {
-            let app_dir = format!(
-                "{workdir}/{symbol}/apps/{name}",
-                workdir = base_dir,
-                symbol = self.symbol,
-                name = self.name
-            );
             let content = format!(
                 r#"#!/bin/bash
-        
-        {dir}/{app_name}.jar > {dir}/log/{name}.log &"#,
+                if [ -f "./log/{name}.log" ];then
+                    # 获取当前时间
+                    current=$(date +%Y%m%d%H%M%S)
+                    # 备份之前日志
+                    mv ./log/{name}.log ./log/$current_{name}.log
+                fi
+                # 启动应用
+                {dir}/{app_name}.jar > {dir}/log/{name}.log &"#,
                 app_name = self.app_name(),
                 name = self.name,
-                dir = app_dir
+                dir = self.workdir
             );
 
-            let start_path = format!("{}/start.sh", app_dir);
+            let start_path = format!("{}/start.sh", self.workdir);
 
             tube::fs::write_file(&start_path, &content.as_bytes());
             return Ok(start_path);
