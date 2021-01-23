@@ -12,14 +12,18 @@ use yaml_rust::yaml;
 /// 配置信息
 #[derive(Debug, Clone)]
 pub struct Config {
+    // 服务配置信息
     pub server: Server,
+    // 工作目录
     pub workdir: String,
 }
 
 /// 服务器信息
 #[derive(Clone, Debug)]
 pub struct Server {
+    // IP地址
     pub ip: String,
+    // 端口
     pub port: u64,
 }
 

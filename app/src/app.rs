@@ -69,7 +69,12 @@ impl App {
 
     /// 获取jar应用名
     pub fn app_name(&self) -> String {
-        format!("{}_{}{}", self.symbol, self.name, self.get_ext())
+        if self.symbol.len()>0{
+            format!("{}_{}{}", self.symbol, self.name, self.get_ext())
+        }
+        else{
+            format!("{}{}", self.name, self.get_ext())
+        }
     }
 
     /// 获取应用包的扩展名
