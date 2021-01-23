@@ -2,8 +2,10 @@
 //! 配置工具
 //! create by shaipe 20210102
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use std::sync::Mutex;
 use tube_error::Result;
 use yaml_rust::yaml;
 
@@ -43,7 +45,7 @@ impl Config {
         // get server value
         let server = yaml_doc["server"].clone();
 
-        let cnf =Config {
+        let cnf = Config {
             server: Server {
                 ip: server["ip"].as_str().unwrap().to_owned(),
                 port: server["port"].as_i64().unwrap() as u64,
@@ -71,9 +73,6 @@ impl std::default::Default for Config {
         }
     }
 }
-
-use std::collections::HashMap;
-use std::sync::Mutex;
 
 // 默认加载静态全局
 lazy_static! {

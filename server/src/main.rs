@@ -9,11 +9,11 @@ extern crate oss;
 #[macro_use]
 extern crate lazy_static;
 
+mod app;
 mod cmd;
 mod config;
-mod upload;
 mod git;
-mod app;
+mod upload;
 
 use actix_web::{middleware, web, App, HttpServer};
 use config::Config;
@@ -21,10 +21,9 @@ use config::Config;
 use clap::{crate_authors, crate_description, crate_version, App as ClapApp, Arg};
 use tube_error::Error;
 
+/// 应用启动入口
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
-
     // 获取命令行参数
     let matches = ClapApp::new("dserver")
         .version(crate_version!())
@@ -60,18 +59,29 @@ async fn main() -> std::io::Result<()> {
     // 对子命令进行处理
     if sub_cmd.len() > 0 {
         if sub_cmd == "install" {
-            deployer_service::install_linux("dserver", " &", 30);
-            println!("install");
-        }
-        else if sub_cmd == "uninstall" {
+            println!("install start ..");
+            let mut my_app = micro_app::App::new("/srv", "deployer", "server");
+            my_app.lang = "rust".to_owned();
+            match my_app.install_service(){
+                Ok(s) => println!("install deployer_server service status:: {}", s),
+                Err(err) => println!("install deployer_server service failed:: {}", err)
+            }
+        } else if sub_cmd == "uninstall" {
             println!("uninstall");
         }
-        println!("execute completed");
         return Ok(());
     }
 
     // 加载配置文件
     let conf_path = matches.value_of("config").unwrap_or("conf/server.yml");
+
+    // 启动web服务
+    start_web_server(conf_path).await
+}
+
+/// web服务启动
+async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
 
     // 加载配置信息
     let conf = match Config::new(conf_path) {
@@ -95,7 +105,7 @@ async fn main() -> std::io::Result<()> {
                 web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
             )
             .data(conf.workdir.clone())
-            .configure(app::app_config)
+            .configure(app::service_config)
     })
     .bind(ip)?
     .run()

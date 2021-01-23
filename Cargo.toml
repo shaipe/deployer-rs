@@ -2,6 +2,5 @@
 members = [
   "server",
   "cli",
-  "service",
   "app"
 ]

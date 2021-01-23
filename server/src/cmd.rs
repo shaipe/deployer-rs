@@ -2,7 +2,6 @@
 //! 命令处理类
 //! create by shaipe 20210120
 
-use tube_cmd::Command;
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 
 /// 命令处理
@@ -37,8 +36,8 @@ pub async fn handler(
                 if let Some(c) = cmd.as_str() {
                     match run_cmd(c, env_dir, true) {
                         Ok(t) => {
-                            let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
-                            res.extend(tc);
+                            // let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                            res.extend(t);
                         }
                         Err(err) => {
                             res.push(format!("error: {}", err));
@@ -65,8 +64,8 @@ pub async fn handler(
                 if let Some(c) = cmd.as_str() {
                     match run_cmd(c, env_dir, true) {
                         Ok(t) => {
-                            let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
-                            res.extend(tc);
+                            // let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                            res.extend(t);
                         }
                         Err(err) => {
                             res.push(format!("error: {}", err));
@@ -99,26 +98,38 @@ pub async fn handler(
 }
 
 /// 运行命令
-fn run_cmd(cmd: &str, env_dir: &str, enable_capture: bool) -> tube_error::Result<String> {
+pub(crate) fn run_cmd(
+    cmd: &str,
+    env_dir: &str,
+    enable_capture: bool,
+) -> tube_error::Result<Vec<String>> {
+    use tube_cmd::Command;
     // let cmd = Command::with_args("bash", &["-c", "ls ; sleep 2; ls"]).set_dir(env_dir).add_args(&[cmd]);
+    // 对操作系统进行判断
+    let cmd_name = if cfg!(target_os = "Windows") {
+        "ps"
+    } else {
+        "bash"
+    };
 
     let res = if enable_capture {
-        Command::with_args("bash", &["-c", cmd])
-            .set_dir(env_dir)
+        Command::with_args(cmd_name, &["-c", cmd])
+            .set_dir(env_dir.clone())
             .enable_capture()
             .run()
     } else {
-        Command::with_args("bash", &["-c", cmd])
-            .set_dir(env_dir)
+        Command::with_args(cmd_name, &["-c", cmd])
+            .set_dir(env_dir.clone())
             .run()
     };
 
-    let hello = match res {
+    let res = match res {
         Ok(s) => format!("{}", s.stdout_string_lossy()),
         Err(e) => {
             // println!("{:?}", e);
             format!("{:?}", e.to_string())
         }
     };
-    Ok(hello)
+    let x = res.lines().map(|x| x.to_owned()).collect::<Vec<String>>();
+    Ok(x)
 }

@@ -45,7 +45,7 @@ async fn handler(
 }
 
 /// api接口配置
-pub fn app_config(scf: &mut web::ServiceConfig) {
+pub fn service_config(scf: &mut web::ServiceConfig) {
     if let Some(cnf) = super::config::get_config() {
         // println!("{:?}", cnf);
         let pool = Pool::load(&cnf.workdir, "orion").unwrap();

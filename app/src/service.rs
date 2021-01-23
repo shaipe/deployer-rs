@@ -52,12 +52,14 @@ impl Service {
                 cmd = self.command,
                 name = self.name
             );
+            // println!("{}\n{}", path, srv_content);
             // 把文件写入服务
             tube::fs::write_file(&path, &srv_content.as_bytes());
             // 设置应用为自启动
-            if let Ok(_r) = run_cmd(&format!("systemctl enable {}", self.name), "./", true) {
+            if let Ok(_r) = run_cmd(&format!("systemctl enable {}", self.name), "", true) {
                 return Ok(true);
             }
+            // return Ok(true);
         } else if cfg!(target_os = "windows") {
             println!("Hello Windows");
         } else {
