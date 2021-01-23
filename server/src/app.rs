@@ -6,8 +6,6 @@ use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse, Result as A
 use serde::{Deserialize, Serialize};
 use tube_error::Result;
 
-use crate::config::get_config;
-
 /// 应用池
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Pool {
@@ -29,6 +27,7 @@ impl Pool {
         }
     }
 
+    /// 初始化加载应用池信息
     pub fn load(workdir: &str, name: &str) -> Result<Pool> {
         use std::fs::create_dir_all;
         use std::fs::File;
@@ -44,8 +43,8 @@ impl Pool {
                 Err(err) => return Err(error!(format!("{:?}", err))),
             }
         }
+        // 给定应用池文件
         let pool_file = format!("{}/pool.json", workdir);
-
         let pool_path = Path::new(&pool_file);
         if pool_path.exists() {
             // Open the file in read-only mode with buffer.
@@ -72,7 +71,6 @@ impl Pool {
 }
 
 /// 应用
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct App {
     // 名称
@@ -97,6 +95,10 @@ impl App {
             port: 7000,
             status: 0,
         }
+    }
+
+    pub fn install(&self) {
+
     }
 }
 
