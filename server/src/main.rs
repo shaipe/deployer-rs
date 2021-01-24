@@ -63,6 +63,7 @@ async fn main() -> std::io::Result<()> {
             match std::env::current_exe() {
                 Ok(p) => {
                     let name = p.file_name().unwrap().to_str().unwrap();
+                    // 设置启动命令,需要指定配置文件路径,因为以服务器动后的当前目录为 / 根目录
                     let cmd = format!(
                         "{} -c {}/conf/server.yml",
                         p.display(),
@@ -123,7 +124,7 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .service(web::resource("/cmd").route(web::post().to(cmd::handler)))
-            .service(web::resource("/git").route(web::post().to(git::hook_handler)))
+            .service(web::resource("/git").route(web::post().to(git::handler)))
             .service(
                 web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
             )

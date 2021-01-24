@@ -24,7 +24,7 @@ tube_cmd = {version="0.1.0", path="../../tube/cmd"}
 tube_web = { version="0.1.0", path="../../tube/web"}
 lazy_static = "1.4.0"
 micro_app = {version="0.1.0", path="../app"}
-
+tube_git = {version="0.1.0", path="../../tube/git"}
 
 
 [[bin]]

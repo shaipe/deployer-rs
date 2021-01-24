@@ -5,17 +5,13 @@
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 // use tube_cmd::Command;
 
-struct GitArgument {
-    workdir: String,
-    action: String,
-    arguments: Vec<String>,
-}
 
 /// 命令处理
 /// WebHook 简介 Gitee WebHook 功能是帮助用户 push 代码后，自动回调一个您设定的 http 地址。
-pub async fn hook_handler(
+pub async fn handler(
     _req: HttpRequest,
     mut payload: web::Payload,
+    workdir: web::Data<String>,
 ) -> Result<HttpResponse, ActixError> {
     use bytes::BytesMut;
     use futures::StreamExt;
@@ -31,9 +27,56 @@ pub async fn hook_handler(
     if let Ok(s) = std::str::from_utf8(&body) {
         println!("req string::: {}", s);
         let val: serde_json::Value = serde_json::from_str(s).unwrap();
+        let mut res: Vec<String> = Vec::new();
+        if let Some(action) = val["action"].as_str() {
+            let env_dir = match val["workdir"].as_str() {
+                Some(dir) => dir,
+                None => &workdir,
+            };
+            let git = tube_git::Git::new(env_dir);
+            match action {
+                "clone" => {
+                    if let Some(url) = val["url"].as_str() {
+                        match tube_git::Git::clone(env_dir, url, false) {
+                            Ok(r) => res.extend(r),
+                            Err(e) => res.push(format!("error:{}", e)),
+                        }
+                    }
+                }
+                "pull" => match git.pull() {
+                    Ok(r) => res.extend(r),
+                    Err(e) => res.push(format!("error:{}", e)),
+                },
+                "push" => match git.push() {
+                    Ok(r) => res.extend(r),
+                    Err(e) => res.push(format!("error:{}", e)),
+                },
+                "commit" => {
+                    if let Some(msg) = val["message"].as_str() {
+                        match git.commit(msg) {
+                            Ok(r) => res.extend(r),
+                            Err(e) => res.push(format!("error:{}", e)),
+                        }
+                    }
+                }
+                "branch" => {
+                    let is_all = if let Some(all) = val["all"].as_str() {
+                        all == "true" || all == "True"
+                    } else {
+                        false
+                    };
+                    match git.branch(is_all) {
+                        Ok(r) => res.extend(r),
+                        Err(e) => res.push(format!("error:{}", e)),
+                    }
+                }
+                _ => {}
+            }
+        }
+
         println!("{:?}", val);
         // 返回执行结果
-        return response::get_success(&tube_value::value!("res"));
+        return response::get_success(&tube_value::value!(res));
     }
 
     response::get_error(error!("not found execute method"))
