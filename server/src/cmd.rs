@@ -31,7 +31,7 @@ pub async fn handler(
         let mut res = Vec::new();
 
         // 1. 对文件进行解压前的命令处理
-        if let Some(cmds) = val["startCommand"].as_array() {
+        if let Some(cmds) = val["start"].as_array() {
             for cmd in cmds {
                 if let Some(c) = cmd.as_str() {
                     match run_cmd(c, env_dir, true) {
@@ -59,7 +59,7 @@ pub async fn handler(
         // }
 
         // 3. 指行命令来重新启动服务
-        if let Some(cmds) = val["endCommand"].as_array() {
+        if let Some(cmds) = val["end"].as_array() {
             for cmd in cmds {
                 if let Some(c) = cmd.as_str() {
                     match run_cmd(c, env_dir, true) {
@@ -79,18 +79,6 @@ pub async fn handler(
         // 返回执行结果
         return response::get_success(&tube_value::value!(res));
     }
-
-    // let hello = match Command::with_args("bash", &["-c", "ls ; sleep 2; ls"])
-    //     .enable_capture()
-    //     .run()
-    // {
-    //     Ok(s) => format!("{}", s.stdout_string_lossy()),
-    //     Err(e) => {
-    //         // println!("{:?}", e);
-    //         format!("{:?}", e.to_string())
-    //     }
-    // };
-    // println!("{:?}", hello);
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
