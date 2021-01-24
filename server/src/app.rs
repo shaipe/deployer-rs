@@ -3,16 +3,16 @@
 //! create by shaipe 20210123
 
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse, Result as ActixResult};
-use serde::{Deserialize, Serialize};
-use tube_error::Result;
+// use serde::{Deserialize, Serialize};
+// use tube_error::Result;
 use micro_app::Pool;
 
-async fn distribute(action: &str) {
-    match action {
-        "install" => {}
-        _ => {}
-    }
-}
+// async fn distribute(action: &str) {
+//     match action {
+//         "install" => {}
+//         _ => {}
+//     }
+// }
 
 /// 微服务应用池管理。
 async fn handler(

@@ -32,16 +32,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .subcommand(
-            App::new("test")
-                .about("controls testing features")
-                .version("1.3")
-                .author("Someone E. <someone_else@other.com>")
-                .arg(Arg::with_name("debug").short("d")),
+            App::new("install")
+                .about("app build and remote install")
+                .version("0.1.0")
+                .author("Shaipe E. <shaipe@sina.com>")
+                .arg(
+                    Arg::with_name("name")
+                        .short("n")
+                        .long("name")
+                        // .value_name("FILE")
+                        // .help("set name of program")
+                        .takes_value(true),
+                ),
         )
         .get_matches();
 
     // 加载配置文件
     let conf_path = matches.value_of("config").unwrap_or("conf/cli.yml");
+
+    let (sub_cmd, sub_args) = matches.subcommand();
 
     println!("Value for config: {}", conf_path);
 
@@ -50,7 +59,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(_e) => panic!("配置文件加载错误."),
     };
 
-    println!("c::{:?}", cnf);
+    // println!("c::{:?}", cnf);
+
+    // 对子命令进行处理
+    if sub_cmd.len() > 0 {
+        // 应用安装
+        if sub_cmd == "install" {
+            if let Some(sub_matches) = sub_args {
+                if let Some(name) = sub_matches.value_of("name") {
+                    if let Some(app) = cnf.get_app(name) {
+                        println!("{:?}", app);
+                    }
+                }
+            }
+        }
+        // 应用更新
+        else if sub_cmd == "update" {
+        }
+        // 执行子命令结束
+        return Ok(());
+    }
 
     // 1. 开始执行的命令
     // for lc in cnf.local.start_cmd {
@@ -59,41 +87,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     println!("{:?}", cmd_res);
     // }
 
-    // 2. 复制并上传文件
-    // remote::upload_img();
-    let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
-    // let f_str = "/Users/shaipe/Documents/xlsx/order.csv";
-    let f_path = Path::new(&f_str);
-    let name = f_path.file_stem().unwrap().to_str().unwrap();
-    let up_res = upload_file(&cnf.local.upload_url, name.to_owned(), f_path, None);
+    // // 2. 复制并上传文件
+    // // remote::upload_img();
+    // let f_str = format!("{}/{}", cnf.local.workdir, cnf.local.upload_file);
+    // // let f_str = "/Users/shaipe/Documents/xlsx/order.csv";
+    // let f_path = Path::new(&f_str);
+    // let name = f_path.file_stem().unwrap().to_str().unwrap();
+    // let up_res = upload_file(&cnf.local.upload_url, name.to_owned(), f_path, None);
 
-    // 判断上传是否成功
-    // 3. 调用执行远端命令
-    if let Ok(res) = up_res {
-        if res.len() > 0 {
-            let yy = remote::call_remote(
-                &cnf.remote.uri,
-                serde_json::json!({
-                    "workdir": cnf.remote.workdir,
-                    "data": {
-                        "relativePath": res
-                    },
-                    "startCommand": cnf.remote.start_cmd,
-                    "endCommand": cnf.remote.end_cmd
-                }),
-            );
-            println!("{:?}", yy);
-        }
-    }
+    // // 判断上传是否成功
+    // // 3. 调用执行远端命令
+    // if let Ok(res) = up_res {
+    //     if res.len() > 0 {
+    //         let yy = remote::call_remote(
+    //             &cnf.remote.uri,
+    //             serde_json::json!({
+    //                 "workdir": cnf.remote.workdir,
+    //                 "data": {
+    //                     "relativePath": res
+    //                 },
+    //                 "startCommand": cnf.remote.start_cmd,
+    //                 "endCommand": cnf.remote.end_cmd
+    //             }),
+    //         );
+    //         println!("{:?}", yy);
+    //     }
+    // }
 
-    // 4. 完成后执行的本地命令
-    for lc in cnf.local.end_cmd {
-        println!("cmd::{}", lc);
-        let cmd_res = cmd::run_cmd(&lc, &cnf.local.workdir, false);
-        println!("{:?}", cmd_res);
-    }
+    // // 4. 完成后执行的本地命令
+    // for lc in cnf.local.end_cmd {
+    //     println!("cmd::{}", lc);
+    //     let cmd_res = cmd::run_cmd(&lc, &cnf.local.workdir, false);
+    //     println!("{:?}", cmd_res);
+    // }
 
-    println!("自动更新命令完成...");
+    // println!("自动更新命令完成...");
 
     Ok(())
 }
