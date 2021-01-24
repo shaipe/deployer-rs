@@ -15,6 +15,8 @@ pub async fn handler(
 ) -> Result<HttpResponse, ActixError> {
     println!("{:?}", req);
     use tube_value::{ToValue, Value};
+    // let root_dir = format!("{}/userfiles", std::env::current_dir().unwrap().display());
+    // println!("{}", root_dir);
     match save_file(req, payload, "userfiles", false).await {
         Ok((res, _forms)) => {
             if res.len() < 2 {

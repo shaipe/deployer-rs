@@ -26,36 +26,38 @@ pub async fn handler(
     // 获取post的字符串
     if let Ok(s) = std::str::from_utf8(&body) {
         let mut res: Vec<String> = Vec::new();
+        println!("{}", s);
+        if let Ok(v) = serde_json::from_str(s) {
+            let val: Cmd = v;
+            println!("{:?}", val);
 
-        let val: Cmd = serde_json::from_str(s).unwrap();
-        println!("{:?}", val);
+            // // println!("{:?}", val);
+            let env_dir = if val.workdir.len() < 1 {
+                &val.workdir
+            } else {
+                &workdir
+            };
 
-        // // println!("{:?}", val);
-        let env_dir = if val.workdir.len() < 1 {
-            &val.workdir
-        } else {
-            &workdir
-        };
+            // 1. 执行开始命令
+            if let Ok(s) = exec_cmd(val.start, env_dir) {
+                res.extend(s);
+            }
 
-        // 1. 执行开始命令
-        if let Ok(s) = exec_cmd(val.start, env_dir) {
-            res.extend(s);
-        }
-
-        // 2. 对action进行处理
-        if val.action.len() > 0 {
-            let file_path = Path::new(&val.file_path);
-            if file_path.exists() {
-                match val.action.as_str() {
-                    "install" => match install(env_dir, &val.file_path, val.app) {
-                        Ok(s) => res.extend(s),
-                        Err(err) => res.push(format!("error: {}", err)),
-                    },
-                    "update" => match install(env_dir, &val.file_path, val.app) {
-                        Ok(s) => res.extend(s),
-                        Err(err) => res.push(format!("error: {}", err)),
-                    },
-                    _ => {}
+            // 2. 对action进行处理
+            if val.action.len() > 0 {
+                let file_path = Path::new(&val.file_path);
+                if file_path.exists() {
+                    match val.action.as_str() {
+                        "install" => match install(env_dir, &val.file_path, val.app) {
+                            Ok(s) => res.extend(s),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        },
+                        "update" => match install(env_dir, &val.file_path, val.app) {
+                            Ok(s) => res.extend(s),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        },
+                        _ => {}
+                    }
                 }
             }
         }

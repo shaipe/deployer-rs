@@ -63,15 +63,16 @@ async fn main() -> std::io::Result<()> {
             match std::env::current_exe() {
                 Ok(p) => {
                     let name = p.file_name().unwrap().to_str().unwrap();
+                    let workdir = format!("{}",p.parent().unwrap().display());
                     // 设置启动命令,需要指定配置文件路径,因为以服务器动后的当前目录为 / 根目录
                     let cmd = format!(
                         "{} -c {}/conf/server.yml",
                         p.display(),
-                        p.parent().unwrap().display()
+                        workdir
                     );
                     // println!("{} {}", name, cmd);
                     // 安装服务
-                    match micro_app::Service::install_linux_service(name, &cmd, 60) {
+                    match micro_app::Service::install_linux_service(&workdir, name, &cmd, 60) {
                         Ok(v) => println!("install {} service {}", name, v),
                         Err(err) => println!("install service failed: {}", err),
                     }
