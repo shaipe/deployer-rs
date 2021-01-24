@@ -53,7 +53,7 @@ impl RemoteImpl for Remote {
             let mut response_data: Vec<u8> = vec![];
             response.read_to_end(&mut response_data).unwrap();
             let res = std::str::from_utf8(&response_data).unwrap();
-
+            println!("{}", res);
             // 转换为json_value
             let val: serde_json::Value = serde_json::from_str(res).unwrap();
 
@@ -69,7 +69,7 @@ impl RemoteImpl for Remote {
     }
 
     fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error> {
-        // println!("cmd url: {:?}", uri);
+        println!("cmd url: {:?}", format!("{}/cmd", self.get_url()));
         // Compose a request
         let client = reqwest::blocking::Client::new();
         let requestbuilder = client

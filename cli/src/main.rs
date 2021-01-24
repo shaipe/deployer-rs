@@ -10,6 +10,7 @@
 mod app_impl;
 mod config;
 mod remote_impl;
+pub(crate) use app_impl::AppImpl;
 pub(crate) use remote_impl::RemoteImpl;
 
 use clap::{crate_authors, crate_description, crate_version, App, Arg};
@@ -62,12 +63,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 对子命令进行处理
     if sub_cmd.len() > 0 {
+        
         // 应用安装
         if sub_cmd == "install" {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
                     if let Some(app) = cnf.get_app(name) {
-                        println!("{:?}", app);
+                        // println!("{:?}", app);
+                        let res = app.install();
+                        println!("{:?}", res);
                     }
                 }
             }

@@ -22,6 +22,55 @@ pub trait AppImpl {
 impl AppImpl for App {
     /// 开始命令执行
     fn install(&self) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
+        // 1. 本地打包
+        match self.start() {
+            Ok(s) => {
+                res.extend(s);
+                // 2. 上传并进行远程处理
+                match self.remote("install") {
+                    Ok(rs) => {
+                        res.extend(rs);
+                        match self.end() {
+                            Ok(es) => {
+                                res.extend(es);
+                            }
+                            Err(err) => res.push(format!("error:{}", err)),
+                        }
+                    }
+                    Err(err) => res.push(format!("error:{}", err)),
+                }
+            }
+            Err(err) => res.push(format!("error:{}", err)),
+        }
+
+        Ok(res)
+    }
+
+    /// 开始命令执行
+    fn update(&self) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
+        for cmd in &self.start {
+            if let Ok(x) = run_cmd(cmd, &self.workdir, true) {
+                res.extend(x);
+            }
+        }
+        Ok(res)
+    }
+
+    /// 开始命令执行
+    fn start(&self) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
+        for cmd in &self.start {
+            if let Ok(x) = run_cmd(cmd, &self.workdir, false) {
+                res.extend(x);
+            }
+        }
+        Ok(res)
+    }
+
+    /// 远程相关处理
+    fn remote(&self, action: &str) -> Result<Vec<String>> {
         use std::path::Path;
         // 1. 复制并上传文件
         let f_str = format!("{}/{}.zip", self.workdir, self.name);
@@ -31,6 +80,7 @@ impl AppImpl for App {
 
         // 2. 调用执行远端命令
         if let Ok(relative_path) = up_res {
+            println!("upload file success path : {:?}", relative_path);
             if relative_path.len() > 0 {
                 let yy = self.remote.call(serde_json::json!({
                     "workdir": self.workdir,
@@ -52,60 +102,11 @@ impl AppImpl for App {
         Ok(vec![])
     }
 
-    /// 开始命令执行
-    fn update(&self) -> Result<Vec<String>> {
-        let mut res: Vec<String> = Vec::new();
-        for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, true) {
-                res.extend(x);
-            }
-        }
-        Ok(res)
-    }
-
-    /// 开始命令执行
-    fn start(&self) -> Result<Vec<String>> {
-        let mut res: Vec<String> = Vec::new();
-        for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, true) {
-                res.extend(x);
-            }
-        }
-        Ok(res)
-    }
-
-    /// 远程相关处理
-    fn remote(&self, action: &str) -> Result<Vec<String>> {
-        use std::path::Path;
-        // 1. 复制并上传文件
-        let f_str = format!("{}/{}.zip", self.workdir, self.name);
-        let f_path = Path::new(&f_str);
-        let name = f_path.file_stem().unwrap().to_str().unwrap();
-        let up_res = self.remote.upload(name.to_owned(), f_path, None);
-
-        // 2. 调用执行远端命令
-        if let Ok(relative_path) = up_res {
-            if relative_path.len() > 0 {
-                let yy = self.remote.call(serde_json::json!({
-                    "workdir": self.workdir,
-                    "action": action,
-                    "data": {
-                        "relativePath": relative_path
-                    },
-                    "start": self.start,
-                    "end": self.end
-                }));
-                println!("{:?}", yy);
-            }
-        }
-        Ok(vec![])
-    }
-
     /// 执行完后的处理
     fn end(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.end {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, true) {
+            if let Ok(x) = run_cmd(cmd, &self.workdir, false) {
                 res.extend(x);
             }
         }
