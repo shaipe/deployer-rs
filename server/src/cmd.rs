@@ -3,6 +3,10 @@
 //! create by shaipe 20210120
 
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
+use micro_app::App;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::path::Path;
 
 /// 命令处理
 pub async fn handler(
@@ -19,62 +23,47 @@ pub async fn handler(
         body.extend_from_slice(&chunk);
     }
 
+    // 获取post的字符串
     if let Ok(s) = std::str::from_utf8(&body) {
-        let val: serde_json::Value = serde_json::from_str(s).unwrap();
+        let mut res: Vec<String> = Vec::new();
 
-        // println!("{:?}", val);
-        let env_dir = match val["workdir"].as_str() {
-            Some(x) => x,
-            None => &workdir,
+        let val: Cmd = serde_json::from_str(s).unwrap();
+        println!("{:?}", val);
+
+        // // println!("{:?}", val);
+        let env_dir = if val.workdir.len() < 1 {
+            &val.workdir
+        } else {
+            &workdir
         };
 
-        let mut res = Vec::new();
+        // 1. 执行开始命令
+        if let Ok(s) = exec_cmd(val.start, env_dir) {
+            res.extend(s);
+        }
 
-        // 1. 对文件进行解压前的命令处理
-        if let Some(cmds) = val["start"].as_array() {
-            for cmd in cmds {
-                if let Some(c) = cmd.as_str() {
-                    match run_cmd(c, env_dir, true) {
-                        Ok(t) => {
-                            // let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
-                            res.extend(t);
-                        }
-                        Err(err) => {
-                            res.push(format!("error: {}", err));
-                        }
-                    }
+        // 2. 对action进行处理
+        if val.action.len() > 0 {
+            let file_path = Path::new(&val.file_path);
+            if file_path.exists() {
+                match val.action.as_str() {
+                    "install" => match install(env_dir, &val.file_path, val.app) {
+                        Ok(s) => res.extend(s),
+                        Err(err) => res.push(format!("error: {}", err)),
+                    },
+                    "update" => match install(env_dir, &val.file_path, val.app) {
+                        Ok(s) => res.extend(s),
+                        Err(err) => res.push(format!("error: {}", err)),
+                    },
+                    _ => {}
                 }
             }
         }
-        // println!("env:: {}, {:?}", env_dir, val["data"]["relativePath"]);
-        // 2. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
-        // if let Some(p) = val["data"]["relativePath"].as_str() {
-        //     if p.len() > 1 {
-        //         // println!("server unzip {:?}, {:?}",p, env_dir);
-        //         match tube::unzip(p, env_dir) {
-        //             Ok(_) => {}
-        //             Err(err) => res.push(format!("error: {}", err)),
-        //         };
-        //     }
+
+        // // 3. 指行命令来重新启动服务
+        // if let Ok(s) = exec_cmd(&val["end"], env_dir) {
+        //     res.extend(s);
         // }
-
-        // 3. 指行命令来重新启动服务
-        if let Some(cmds) = val["end"].as_array() {
-            for cmd in cmds {
-                if let Some(c) = cmd.as_str() {
-                    match run_cmd(c, env_dir, true) {
-                        Ok(t) => {
-                            // let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
-                            res.extend(t);
-                        }
-                        Err(err) => {
-                            res.push(format!("error: {}", err));
-                        }
-                    }
-                }
-            }
-        }
-
         use tube_web::response;
         // 返回执行结果
         return response::get_success(&tube_value::value!(res));
@@ -83,6 +72,75 @@ pub async fn handler(
     Ok(HttpResponse::Ok()
         .content_type("application/json")
         .body(r#"{"error": "not support method"}"#))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Cmd {
+    workdir: String,
+    app: App,
+    action: String,
+    #[serde(rename = "filePath")]
+    file_path: String,
+    start: Vec<String>,
+    end: Vec<String>,
+}
+
+/// 应用安装
+fn install(workdir: &str, file_path: &str, app: App) -> tube_error::Result<Vec<String>> {
+    let mut res: Vec<String> = Vec::new();
+    // 1. 创建目录
+    let app_dir = format!("{}/{}/{}", workdir, app.symbol, app.name);
+    let app_path = Path::new(&app_dir);
+    if !app_path.exists() {
+        let _ = std::fs::create_dir_all(&app_path);
+    }
+
+    // 2. 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
+    let fp = Path::new(file_path);
+    if fp.exists() {
+        match tube::unzip(file_path, &app_dir) {
+            Ok(_) => {}
+            Err(err) => res.push(format!("error: {}", err)),
+        };
+    }
+
+    // 3. 配置安装服务
+    if app.is_service && app.exec_start.len() > 0 {
+        let exec_path = Path::new(&app.exec_start);
+        // 是否安装服务
+        if exec_path.exists() {
+            match app.install_service() {
+                Ok(b) => {
+                    res.push(format!("install service status {}", b));
+                }
+                Err(err) => res.push(format!("error: {}", err)),
+            }
+        }
+    }
+
+    Ok(vec![])
+}
+
+/// 应用更新
+fn update() -> tube_error::Result<Vec<String>> {
+    Ok(vec![])
+}
+
+/// 根据value执行命令
+fn exec_cmd(cmds: Vec<String>, env_dir: &str) -> tube_error::Result<Vec<String>> {
+    let mut res: Vec<String> = Vec::new();
+    for cmd in cmds {
+        match run_cmd(&cmd, env_dir, true) {
+            Ok(t) => {
+                // let tc: Vec<String> = t.split("\n").map(|s| s.to_owned()).collect();
+                res.extend(t);
+            }
+            Err(err) => {
+                res.push(format!("error: {}", err));
+            }
+        }
+    }
+    Ok(res)
 }
 
 /// 运行命令

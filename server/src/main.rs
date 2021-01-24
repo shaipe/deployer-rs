@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                         p.display(),
                         p.parent().unwrap().display()
                     );
-                    println!("{} {}", name, cmd);
+                    // println!("{} {}", name, cmd);
                     // 安装服务
                     match micro_app::Service::install_linux_service(name, &cmd, 60) {
                         Ok(v) => println!("install {} service {}", name, v),
