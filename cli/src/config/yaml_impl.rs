@@ -7,6 +7,8 @@ use yaml_rust::Yaml;
 pub trait YamlImpl {
     fn get_string(&self, def: &str) -> String;
 
+    fn get_bool(&self) -> bool;
+
     fn get_vec(&self) -> Vec<String>;
 }
 
@@ -17,6 +19,15 @@ impl YamlImpl for Yaml {
             v.to_owned()
         } else {
             def.to_owned()
+        }
+    }
+
+    /// 获取bool型
+    fn get_bool(&self) -> bool {
+        if let Some(v) = self.as_bool() {
+            v
+        } else {
+            false
         }
     }
 

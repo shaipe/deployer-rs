@@ -28,6 +28,8 @@ pub struct App {
     pub start: Vec<String>,
     // 安装或更新远程执行完成后执行的命令配置
     pub end: Vec<String>,
+    // 是否为服务
+    pub is_service: bool,
 }
 
 impl App {
@@ -44,6 +46,7 @@ impl App {
             remote: Remote::load_yaml(&doc["remote"]),
             start: doc["start"].get_vec(),
             end: doc["end"].get_vec(),
+            is_service: doc["is_service"].get_bool(),
         }
     }
 }
