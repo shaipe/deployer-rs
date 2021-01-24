@@ -12,6 +12,8 @@ pub struct Service {
     pub name: String,
     // 服务启动超时时间
     pub timeout: u16,
+    // 服务的工作目录
+    pub workdir: String,
     // 启动执行命令
     pub command: String,
 }
@@ -25,13 +27,19 @@ impl Service {
             name: name.to_owned(),
             timeout: timeout,
             command: cmd.to_owned(),
+            workdir: "/".to_owned(),
         }
     }
 
     /// 服务安装
     pub fn install(&self) -> Result<bool> {
         if cfg!(target_os = "linux") {
-            return Service::install_linux_service(&self.name, &self.command, self.timeout);
+            return Service::install_linux_service(
+                &self.workdir,
+                &self.name,
+                &self.command,
+                self.timeout,
+            );
             // return Ok(true);
         } else if cfg!(target_os = "windows") {
             println!("Hello Windows");
@@ -42,7 +50,12 @@ impl Service {
     }
 
     /// Linuxt系统服务安装
-    pub fn install_linux_service(name: &str, cmd: &str, timeout: u16) -> Result<bool> {
+    pub fn install_linux_service(
+        workdir: &str,
+        name: &str,
+        cmd: &str,
+        timeout: u16,
+    ) -> Result<bool> {
         let path = format!("/lib/systemd/system/{name}.service", name = name);
         let srv_content = format!(
             r#"
@@ -52,6 +65,7 @@ After=network.target
 
 [Service]
 Type=simple
+WorkingDirectory={workdir}
 ExecStart={cmd}
 # PrivateTmp=true
 # TimeoutStartSec={timeout}
@@ -59,6 +73,7 @@ ExecStart={cmd}
 [Install]
 WantedBy=multi-user.target
 "#,
+            workdir = workdir,
             timeout = timeout,
             cmd = cmd,
             name = name
