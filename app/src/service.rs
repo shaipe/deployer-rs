@@ -30,40 +30,55 @@ impl Service {
 
     /// 服务安装
     pub fn install(&self) -> Result<bool> {
-        use super::cmd::run_cmd;
         if cfg!(target_os = "linux") {
-            let path = format!("/lib/systemd/system/{name}.service", name = self.name);
-            let srv_content = format!(
-                r#"
-        [Unit]
-        Description={name}
-        After=network.target
-        
-        [Service]
-        Type=forking
-        ExecStart={cmd}
-        PrivateTmp=true
-        TimeoutStartSec={timeout}
-        
-        [Install]
-        WantedBy=multi-user.target
-        "#,
-                timeout = self.timeout,
-                cmd = self.command,
-                name = self.name
-            );
-            // println!("{}\n{}", path, srv_content);
-            // 把文件写入服务
-            tube::fs::write_file(&path, &srv_content.as_bytes());
-            // 设置应用为自启动
-            if let Ok(_r) = run_cmd(&format!("systemctl enable {}", self.name), "", true) {
-                return Ok(true);
-            }
+            return Service::install_linux_service(&self.name, &self.command, self.timeout);
             // return Ok(true);
         } else if cfg!(target_os = "windows") {
             println!("Hello Windows");
         } else {
             println!("Unknown os");
+        }
+        Ok(false)
+    }
+
+    /// Linuxt系统服务安装
+    pub fn install_linux_service(name: &str, cmd: &str, timeout: u16) -> Result<bool> {
+        let path = format!("/lib/systemd/system/{name}.service", name = name);
+        let srv_content = format!(
+            r#"
+[Unit]
+Description={name}
+After=network.target
+
+[Service]
+Type=simple
+ExecStart={cmd}
+# PrivateTmp=true
+# TimeoutStartSec={timeout}
+
+[Install]
+WantedBy=multi-user.target
+"#,
+            timeout = timeout,
+            cmd = cmd,
+            name = name
+        );
+        // println!("{}\n{}", path, srv_content);
+        // 把文件写入服务
+        tube::fs::write_file(&path, &srv_content.as_bytes());
+        // 设置应用为自启动
+        use super::cmd::run_cmd;
+        if let Ok(_r) = run_cmd(&format!("systemctl enable {}", name), "", true) {
+            return Ok(true);
+        }
+        Ok(false)
+    }
+
+    /// 启动服务
+    pub fn start(name: &str) -> Result<bool> {
+        use super::cmd::run_cmd;
+        if let Ok(_r) = run_cmd(&format!("systemctl start {}", name), "", true) {
+            return Ok(true);
         }
         Ok(false)
     }

@@ -55,7 +55,22 @@ impl Config {
                 port: server["port"].as_i64().unwrap() as u64,
             },
             workdir: if let Some(dir) = yaml_doc["workdir"].as_str() {
-                dir.to_owned()
+                let mut workdir = dir;
+                use std::path::Path;
+                use std::fs::create_dir_all;
+                // 判断工作目录是否存在
+                let dir_path = Path::new(workdir);
+                if !dir_path.exists() {
+                    // 如果目录不存在就创建目录
+                    match create_dir_all(workdir) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            println!("{:?}", err);
+                            workdir = "./";
+                        }
+                    }
+                }
+                workdir.to_owned()
             } else {
                 "./".to_owned()
             },

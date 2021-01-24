@@ -33,7 +33,7 @@ impl Pool {
         use std::fs::File;
         use std::io::BufReader;
         use std::path::Path;
-
+        // println!("{}", workdir);
         // 判断工作目录是否存在
         let dir_path = Path::new(workdir);
         if !dir_path.exists() {
@@ -45,6 +45,7 @@ impl Pool {
         }
         // 给定应用池文件
         let pool_file = format!("{}/pool.json", workdir);
+        println!("{}", pool_file);
         let pool_path = Path::new(&pool_file);
         if pool_path.exists() {
             // Open the file in read-only mode with buffer.

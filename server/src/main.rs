@@ -60,12 +60,35 @@ async fn main() -> std::io::Result<()> {
     if sub_cmd.len() > 0 {
         if sub_cmd == "install" {
             println!("install start ..");
-            let mut my_app = micro_app::App::new("/srv", "deployer", "server");
-            my_app.lang = "rust".to_owned();
-            match my_app.install_service(){
-                Ok(s) => println!("install deployer_server service status:: {}", s),
-                Err(err) => println!("install deployer_server service failed:: {}", err)
+            match std::env::current_exe() {
+                Ok(p) => {
+                    let name = p.file_name().unwrap().to_str().unwrap();
+                    let cmd = format!(
+                        "{} -c {}/conf/server.yml",
+                        p.display(),
+                        p.parent().unwrap().display()
+                    );
+                    println!("{} {}", name, cmd);
+                    // 安装服务
+                    match micro_app::Service::install_linux_service(name, &cmd, 60) {
+                        Ok(v) => println!("install {} service {}", name, v),
+                        Err(err) => println!("install service failed: {}", err),
+                    }
+
+                    // 启动服务
+                    match micro_app::Service::start(name) {
+                        Ok(v) => println!("start {} service {}", name, v),
+                        Err(err) => println!("start service failed: {}", err),
+                    }
+                }
+                Err(e) => println!("{:?}", e),
             }
+            // let mut my_app = micro_app::App::new("/srv", "deployer", "server");
+            // my_app.lang = "rust".to_owned();
+            // match my_app.install_service(){
+            //     Ok(s) => println!("install deployer_server service status:: {}", s),
+            //     Err(err) => println!("install deployer_server service failed:: {}", err)
+            // }
         } else if sub_cmd == "uninstall" {
             println!("uninstall");
         }

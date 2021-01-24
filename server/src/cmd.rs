@@ -8,6 +8,7 @@ use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 pub async fn handler(
     _req: HttpRequest,
     mut payload: web::Payload,
+    workdir: web::Data<String>,
 ) -> Result<HttpResponse, ActixError> {
     use bytes::BytesMut;
     use futures::StreamExt;
@@ -22,10 +23,9 @@ pub async fn handler(
         let val: serde_json::Value = serde_json::from_str(s).unwrap();
 
         // println!("{:?}", val);
-
         let env_dir = match val["workdir"].as_str() {
             Some(x) => x,
-            None => "./",
+            None => &workdir,
         };
 
         let mut res = Vec::new();
