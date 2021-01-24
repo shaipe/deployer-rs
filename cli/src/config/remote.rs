@@ -21,7 +21,6 @@ pub struct Remote {
 }
 
 impl Remote {
-
     /// 从yaml配置中加载远程信息
     pub fn load_yaml(doc: &Yaml) -> Self {
         use super::YamlImpl;
@@ -36,5 +35,17 @@ impl Remote {
             start: doc["start"].get_vec(),
             end: doc["end"].get_vec(),
         }
+    }
+
+    /// 根据配置获url
+    pub fn get_url(&self) -> String {
+        // 判断处理端口问题
+        let port_str = if self.port > 0 {
+            format!(":{}", self.port)
+        } else {
+            "".to_owned()
+        };
+
+        format!("http://{}{}", self.server, port_str)
     }
 }

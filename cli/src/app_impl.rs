@@ -3,6 +3,7 @@
 //! create by shaipe 20210102
 
 use crate::config::App;
+use crate::RemoteImpl;
 use tube_error::Result;
 
 /// 对app应用处理
@@ -28,8 +29,27 @@ impl AppImpl for App {
 
     /// 远程相关处理
     fn remote(&self) -> Result<Vec<String>> {
+        use std::path::Path;
         // 1. 复制并上传文件
+        let f_str = format!("{}/{}.zip", self.workdir, self.name);
+        let f_path = Path::new(&f_str);
+        let name = f_path.file_stem().unwrap().to_str().unwrap();
+        let up_res = self.remote.upload(name.to_owned(), f_path, None);
+
         // 2. 调用执行远端命令
+        if let Ok(res) = up_res {
+            if res.len() > 0 {
+                let yy = self.remote.call(serde_json::json!({
+                    "workdir": self.workdir,
+                    "data": {
+                        "relativePath": res
+                    },
+                    "start": self.start,
+                    "end": self.end
+                }));
+                println!("{:?}", yy);
+            }
+        }
         Ok(vec![])
     }
 

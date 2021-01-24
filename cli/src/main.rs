@@ -7,14 +7,13 @@
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 // use tube_error::Error;
 
-mod cmd;
+mod app_impl;
 mod config;
-mod remote;
+mod remote_impl;
+pub(crate) use remote_impl::RemoteImpl;
 
 use clap::{crate_authors, crate_description, crate_version, App, Arg};
 use config::Config;
-use remote::upload_file;
-use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 获取命令行参数
