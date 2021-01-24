@@ -17,6 +17,12 @@ pub struct App {
     pub description: String,
     // 应用工作目录
     pub workdir: String,
+    // 是否为服务
+    #[serde(rename="isService")]
+    pub is_service: bool,
+    // 启动执行程序
+    #[serde(rename="execStart")]
+    pub exec_start: String,
     // 端口
     pub port: u16,
     // 应用状态
@@ -40,12 +46,16 @@ impl App {
                 symbol = symbol,
                 name = name
             ),
+            is_service: true,
+            exec_start: "".to_owned(),
             port: 7000,
             status: 0,
             version: "0.1.0".to_owned(),
             lang: "java".to_owned(),
         }
     }
+
+    // pub fn load_json(val: )
 
     /// 安装服务
     pub fn install_service(&self) -> Result<bool> {
@@ -54,15 +64,13 @@ impl App {
         if self.lang == "java" {
             match self.install_start_shell() {
                 Ok(s) => {
-                    let cmd = format!("{} &", s);
-                    let srv = service::Service::new(&srv_name, &cmd, 180);
+                    let srv = service::Service::new(&srv_name, &s, 180);
                     srv.install()
                 }
                 Err(err) => Err(err),
             }
         } else {
-            let cmd = format!("{}/{} &", self.workdir, srv_name);
-            let srv = service::Service::new(&srv_name, &cmd, 180);
+            let srv = service::Service::new(&srv_name, &self.exec_start, 60);
             srv.install()
         }
     }
