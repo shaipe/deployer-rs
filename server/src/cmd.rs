@@ -5,7 +5,6 @@
 use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 use micro_app::App;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::path::Path;
 
 /// 命令处理
@@ -54,7 +53,7 @@ pub async fn handler(
                                 Ok(s) => res.extend(s),
                                 Err(err) => res.push(format!("error: {}", err)),
                             },
-                            "update" => match install(env_dir, &val.file_path, val.app) {
+                            "update" => match update(env_dir, &val.file_path, val.app) {
                                 Ok(s) => res.extend(s),
                                 Err(err) => res.push(format!("error: {}", err)),
                             },
@@ -91,10 +90,12 @@ pub struct Cmd {
 }
 
 /// 应用安装
-fn install(workdir: &str, file_path: &str, app: App) -> tube_error::Result<Vec<String>> {
+fn install(workdir: &str, file_path: &str, mut app: App) -> tube_error::Result<Vec<String>> {
     let mut res: Vec<String> = Vec::new();
     // 1. 创建目录
     let app_dir = format!("{}/{}/{}", workdir, app.symbol, app.name);
+    app.workdir = app_dir.clone();
+
     let app_path = Path::new(&app_dir);
     if !app_path.exists() {
         let _ = std::fs::create_dir_all(&app_path);
@@ -104,10 +105,13 @@ fn install(workdir: &str, file_path: &str, app: App) -> tube_error::Result<Vec<S
     let fp = Path::new(file_path);
     if fp.exists() {
         match tube::unzip(file_path, &app_dir) {
-            Ok(_) => {}
+            Ok(_) => res.push("unzip successfully".to_owned()),
             Err(err) => res.push(format!("error: {}", err)),
         };
     }
+
+    // 设置启动路径
+    app.exec_start = format!("{}/{}", app_dir, app.app_name());
 
     // 3. 配置安装服务
     if app.is_service && app.exec_start.len() > 0 {
@@ -123,12 +127,49 @@ fn install(workdir: &str, file_path: &str, app: App) -> tube_error::Result<Vec<S
         }
     }
 
-    Ok(vec![])
+    Ok(res)
 }
 
 /// 应用更新
-fn update() -> tube_error::Result<Vec<String>> {
-    Ok(vec![])
+fn update(workdir: &str, file_path: &str, mut app: App) -> tube_error::Result<Vec<String>> {
+    let mut res: Vec<String> = Vec::new();
+
+    let app_dir = format!("{}/{}/{}", workdir, app.symbol, app.name);
+    app.workdir = app_dir.clone();
+
+    let fp = Path::new(file_path);
+    if fp.exists() {
+        // 1. 停止现有服务
+        if app.is_service {
+            let cmd = format!("systemctl stop {}_{}", app.symbol, app.name);
+            match run_cmd(&cmd, "", true){
+                Ok(s) => res.extend(s),
+                Err(err) => res.push(format!("error: {}", err)),
+            }
+        }
+
+        // 2. 备份原程序
+        match app.backup() {
+            Ok(_) => res.push("backup successfully".to_owned()),
+            Err(err) => res.push(format!("error: {}", err)),
+        };
+
+        // 3. 文件覆盖
+        match tube::unzip(file_path, &app_dir) {
+            Ok(_) => res.push("unzip successfully".to_owned()),
+            Err(err) => res.push(format!("error: {}", err)),
+        };
+
+        // 4. 启动服务
+        if app.is_service {
+            let cmd = format!("systemctl start {}_{}", app.symbol, app.name);
+            match run_cmd(&cmd, "", true){
+                Ok(s) => res.extend(s),
+                Err(err) => res.push(format!("error: {}", err)),
+            }
+        }
+    }
+    Ok(res)
 }
 
 /// 根据value执行命令
