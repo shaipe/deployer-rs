@@ -13,10 +13,12 @@ mod service;
 mod cmd;
 mod app;
 mod pool;
+mod docker;
 
 pub use service::Service;
 pub use app::App;
 pub use pool::Pool;
+pub use docker::Docker;
 
 
 #[cfg(test)]
