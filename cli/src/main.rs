@@ -7,10 +7,10 @@
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 // use tube_error::Error;
 
-mod app_impl;
+mod task_impl;
 mod config;
 mod remote_impl;
-pub(crate) use app_impl::AppImpl;
+pub(crate) use task_impl::TaskImpl;
 pub(crate) use remote_impl::RemoteImpl;
 
 use clap::{crate_authors, crate_description, crate_version, App, Arg};
@@ -68,9 +68,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if sub_cmd == "install" {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
-                    if let Some(app) = cnf.get_app(name) {
+                    if let Some(tsk) = cnf.get_task(name) {
                         // println!("{:?}", app);
-                        let res = app.install();
+                        let res = tsk.install();
                         println!("{:?}", res);
                     }
                 }

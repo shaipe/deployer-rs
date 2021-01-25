@@ -2,12 +2,13 @@
 //! 命令行操作应用类
 //! create by shaipe 20210102
 
-use crate::config::App;
+use micro_app::App;
 use crate::RemoteImpl;
 use tube_error::Result;
+use crate::config::Task;
 
 /// 对app应用处理
-pub trait AppImpl {
+pub trait TaskImpl {
     fn install(&self) -> Result<Vec<String>>;
 
     fn update(&self) -> Result<Vec<String>>;
@@ -19,7 +20,7 @@ pub trait AppImpl {
     fn end(&self) -> Result<Vec<String>>;
 }
 
-impl AppImpl for App {
+impl TaskImpl for Task {
     /// 开始命令执行
     fn install(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
@@ -51,7 +52,7 @@ impl AppImpl for App {
     fn update(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, true) {
+            if let Ok(x) = run_cmd(cmd, &self.app.workdir, true) {
                 res.extend(x);
             }
         }
@@ -62,7 +63,7 @@ impl AppImpl for App {
     fn start(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, false) {
+            if let Ok(x) = run_cmd(cmd, &self.app.workdir, false) {
                 res.extend(x);
             }
         }
@@ -73,7 +74,7 @@ impl AppImpl for App {
     fn remote(&self, action: &str) -> Result<Vec<String>> {
         use std::path::Path;
         // 1. 复制并上传文件
-        let f_str = format!("{}/{}.zip", self.workdir, self.name);
+        let f_str = format!("{}/{}.zip", self.app.workdir, self.name);
         let f_path = Path::new(&f_str);
         let name = f_path.file_stem().unwrap().to_str().unwrap();
         let up_res = self.remote.upload(name.to_owned(), f_path, None);
@@ -83,18 +84,19 @@ impl AppImpl for App {
             println!("upload file success path : {:?}", relative_path);
             if relative_path.len() > 0 {
                 let yy = self.remote.call(serde_json::json!({
-                    "workdir": self.workdir,
-                    "action": "install",
+                    "workdir": self.remote.workdir,
+                    "action": action,
                     "filePath": relative_path,
-                    "app": {
-                        "symbol": self.symbol,
-                        "name": self.name,
-                        "version": self.version,
-                        "isServer": self.is_service,
-                        // "execStart": self.exec_start
-                    },
-                    "start": self.start,
-                    "end": self.end
+                    // "app": {
+                    //     "symbol": self.symbol,
+                    //     "name": self.name,
+                    //     "version": self.version,
+                    //     "isServer": self.is_service,
+                    //     "description": self.description,
+                    //     // "execStart": self.exec_start
+                    // },
+                    "start": self.remote.start,
+                    "end": self.remote.end
                 }));
                 println!("{:?}", yy);
             }
@@ -106,7 +108,7 @@ impl AppImpl for App {
     fn end(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.end {
-            if let Ok(x) = run_cmd(cmd, &self.workdir, false) {
+            if let Ok(x) = run_cmd(cmd, &self.app.workdir, false) {
                 res.extend(x);
             }
         }
