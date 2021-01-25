@@ -14,11 +14,13 @@ mod cmd;
 mod app;
 mod pool;
 mod docker;
+mod remote;
 
 pub use service::Service;
 pub use app::App;
 pub use pool::Pool;
 pub use docker::Docker;
+pub use remote::Remote;
 
 
 #[cfg(test)]
