@@ -8,10 +8,8 @@ use std::io::prelude::*;
 use std::result::Result;
 
 
-mod remote;
 mod task;
 mod yaml;
-pub(crate) use remote::Remote;
 pub(crate) use task::Task;
 use yaml::{YamlImpl,load_tasks};
 

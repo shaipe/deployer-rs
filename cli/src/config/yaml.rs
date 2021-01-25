@@ -2,8 +2,8 @@
 //! 使用yml格式的配置中加载
 //! create by shaipe 20210125
 
-use super::{Remote, Task};
-use micro_app::App;
+use super::Task;
+use micro_app::{App, Docker, Remote, Service};
 use yaml_rust::Yaml;
 
 /// 基于yaml扩展接口
@@ -69,41 +69,70 @@ pub fn load_tasks(doc: &Yaml) -> Vec<Task> {
 
 /// 加载任务
 pub fn load_task(doc: &Yaml) -> Task {
+    let name = doc["name"].get_string("");
+    let symbol = doc["symbol"].get_string("");
+    let desc = doc["description"].get_string("");
     Task {
-        name: doc["name"].get_string(""),
-        app: load_app(&doc["app"]),
+        name: name.clone(),
+        symbol: symbol.clone(),
+        description: desc.clone(),
+        app_type: doc["type"].get_string(""),
+        app: load_app(&name, &symbol, &desc, &doc["app"]),
         remote: load_remote(&doc["remote"]),
+        service: load_service(&name, &symbol, &doc["service"]),
+        docker: load_docker(&doc["docker"]),
         start: doc["start"].get_vec(),
         end: doc["end"].get_vec(),
     }
 }
 
-/// 加载应用
-pub fn load_app(doc: &Yaml) -> App {
-    let exec_arg = doc["exec_arg"].get_string("");
+/// 加载容器配置
+pub fn load_docker(doc: &Yaml) -> Option<Docker> {
+    if doc.is_null() {
+        return None;
+    }
+    None
+}
 
+/// 加载服务配置
+pub fn load_service(name: &str, symbol: &str, doc: &Yaml) -> Option<Service> {
+    if doc.is_null() {
+        None
+    } else {
+        let mut srv_name = name.to_owned();
+        if symbol.len() > 0 {
+            srv_name = format!("{}_{}", symbol, name);
+        }
+        let arg = doc["args"].get_string("");
+
+        Some(Service {
+            name: srv_name,
+            exec: doc["workdir"].get_string(""),
+            args: if arg.len() > 0 { Some(arg) } else { None },
+            workdir: doc["workdir"].get_string(""),
+            timeout: 60,
+        })
+    }
+}
+
+/// 加载应用
+pub fn load_app(name: &str, symbol: &str, desc: &str, doc: &Yaml) -> App {
     App {
-        symbol: doc["symbol"].get_string(""),
-        name: doc["name"].get_string(""),
-        description: doc["description"].get_string(""),
-        port: 3000,
-        exec_start: doc["exec_start"].get_string(""),
-        exec_arg: if exec_arg.len() > 0 {
-            Some(exec_arg)
-        } else {
-            None
-        },
+        symbol: symbol.to_owned(),
+        name: name.to_owned(),
+        description: desc.to_owned(),
         version: doc["version"].get_string("0.1.0"),
         lang: doc["lang"].get_string("rust"),
-        workdir: doc["workdir"].get_string("./"),
-        is_service: doc["is_service"].get_bool(),
-        status: 1,
+        code_dir: doc["workdir"].get_string("./"),
     }
 }
 
 /// 加载远程处理配置
-pub fn load_remote(doc: &Yaml) -> Remote {
-    Remote {
+pub fn load_remote(doc: &Yaml) -> Option<Remote> {
+    if doc.is_null() {
+        return None;
+    }
+    Some(Remote {
         server: doc["server"].get_string("127.0.0.1"),
         port: if let Some(p) = doc["port"].as_i64() {
             p as u16
@@ -113,5 +142,5 @@ pub fn load_remote(doc: &Yaml) -> Remote {
         workdir: doc["workdir"].get_string("./"),
         start: doc["start"].get_vec(),
         end: doc["end"].get_vec(),
-    }
+    })
 }

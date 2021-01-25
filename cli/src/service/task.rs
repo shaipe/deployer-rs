@@ -3,8 +3,8 @@
 //! create by shaipe 20210102
 
 use super::RemoteService;
-use tube_error::Result;
 use crate::config::Task;
+use tube_error::Result;
 
 /// 对app应用处理
 pub trait TaskService {
@@ -79,7 +79,7 @@ impl TaskService for Task {
     fn start(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.app.workdir, false) {
+            if let Ok(x) = run_cmd(cmd, &self.app.code_dir, false) {
                 res.extend(x);
             }
         }
@@ -89,25 +89,27 @@ impl TaskService for Task {
     /// 远程相关处理
     fn remote(&self, action: &str) -> Result<Vec<String>> {
         use std::path::Path;
-        // 1. 复制并上传文件
-        let f_str = format!("{}/{}.zip", self.app.workdir, self.name);
-        let f_path = Path::new(&f_str);
-        let name = f_path.file_stem().unwrap().to_str().unwrap();
-        let up_res = self.remote.upload(name.to_owned(), f_path, None);
+        if let Some(remote) = self.remote.clone() {
+            // 1. 复制并上传文件
+            let f_str = format!("{}/{}.zip", self.app.code_dir, self.name);
+            let f_path = Path::new(&f_str);
+            let name = f_path.file_stem().unwrap().to_str().unwrap();
+            let up_res = remote.upload(name.to_owned(), f_path, None);
 
-        // 2. 调用执行远端命令
-        if let Ok(relative_path) = up_res {
-            println!("upload file success path : {:?}", relative_path);
-            if relative_path.len() > 0 {
-                let yy = self.remote.call(serde_json::json!({
-                    "workdir": self.remote.workdir,
-                    "action": action,
-                    "filePath": relative_path,
-                    "app": self.app,
-                    "start": self.remote.start,
-                    "end": self.remote.end
-                }));
-                println!("{:?}", yy);
+            // 2. 调用执行远端命令
+            if let Ok(relative_path) = up_res {
+                println!("upload file success path : {:?}", relative_path);
+                if relative_path.len() > 0 {
+                    let yy = remote.call(serde_json::json!({
+                        "workdir": remote.workdir,
+                        "action": action,
+                        "filePath": relative_path,
+                        "app": self.app,
+                        "start": remote.start,
+                        "end": remote.end
+                    }));
+                    println!("{:?}", yy);
+                }
             }
         }
         Ok(vec![])
@@ -117,7 +119,7 @@ impl TaskService for Task {
     fn end(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.end {
-            if let Ok(x) = run_cmd(cmd, &self.app.workdir, false) {
+            if let Ok(x) = run_cmd(cmd, &self.app.code_dir, false) {
                 res.extend(x);
             }
         }

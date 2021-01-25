@@ -2,7 +2,7 @@
 //! 本地文件上传到服务器
 //! create by shaipe 20210103
 
-use crate::config::Remote;
+use micro_app::Remote;
 use reqwest::blocking::multipart;
 use std::collections::HashMap;
 use std::io::Read;
@@ -23,6 +23,7 @@ pub trait RemoteService {
     fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error>;
 }
 
+/// 远程调用业务实现
 impl RemoteService for Remote {
     /// 文件上传
     fn upload(
@@ -68,8 +69,9 @@ impl RemoteService for Remote {
         Ok("".to_owned())
     }
 
+    /// 调用远程命令
     fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error> {
-        println!("cmd url: {:?}", format!("{}/cmd", self.get_url()));
+        // println!("cmd url: {:?}", format!("{}/cmd", self.get_url()));
         // Compose a request
         let client = reqwest::blocking::Client::new();
         let requestbuilder = client
