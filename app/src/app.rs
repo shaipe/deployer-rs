@@ -18,11 +18,13 @@ pub struct App {
     // 应用工作目录
     pub workdir: String,
     // 是否为服务
-    #[serde(rename="isService")]
+    #[serde(rename = "isService")]
     pub is_service: bool,
     // 启动执行程序
-    #[serde(rename="execStart")]
+    #[serde(rename = "execStart")]
     pub exec_start: String,
+    #[serde(rename = "execArg")]
+    pub exec_arg: Option<String>,
     // 端口
     pub port: u16,
     // 应用状态
@@ -48,6 +50,7 @@ impl App {
             ),
             is_service: true,
             exec_start: "".to_owned(),
+            exec_arg: None,
             port: 7000,
             status: 0,
             version: "0.1.0".to_owned(),
@@ -55,32 +58,43 @@ impl App {
         }
     }
 
-    // pub fn load_json(val: )
+    /// 应用程序备份
+    pub fn backup(&self) -> Result<Vec<String>> {
+        let app_path = format!("{}/{}", self.workdir, self.app_name());
+        let bak_path = format!("{}.bak", app_path);
+        match std::fs::copy(app_path, bak_path) {
+            Ok(_) => Ok(vec!["backup file successfully".to_owned()]),
+            Err(err) => Err(error!(format!("error:{:?}", err))),
+        }
+    }
 
     /// 安装服务
     pub fn install_service(&self) -> Result<bool> {
         let srv_name = format!("{}_{}", self.symbol, self.name);
-        // println!("srv name {}", srv_name);
-        if self.lang == "java" {
-            match self.install_start_shell() {
-                Ok(s) => {
-                    let srv = service::Service::new(&srv_name, &s, 180);
-                    srv.install()
-                }
-                Err(err) => Err(err),
-            }
-        } else {
-            let srv = service::Service::new(&srv_name, &self.exec_start, 60);
-            srv.install()
+        let mut cmd = self.exec_start.clone();
+        if let Some(arg) = self.exec_arg.clone() {
+            cmd = format!("{} {}", self.exec_start, arg);
         }
+        // println!("srv name {}", srv_name);
+        // if self.lang == "java" {
+        // match self.install_start_shell() {
+        //     Ok(s) => {
+        //         let srv = service::Service::new(&srv_name, &s, 180);
+        //         srv.install()
+        // //     }
+        //     Err(err) => Err(err),
+        // }
+        // } else {
+        let srv = service::Service::new(&self.workdir, &srv_name, &cmd, 60);
+        srv.install()
+        // }
     }
 
     /// 获取jar应用名
     pub fn app_name(&self) -> String {
-        if self.symbol.len()>0{
+        if self.symbol.len() > 0 {
             format!("{}_{}{}", self.symbol, self.name, self.get_ext())
-        }
-        else{
+        } else {
             format!("{}{}", self.name, self.get_ext())
         }
     }

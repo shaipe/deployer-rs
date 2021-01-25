@@ -22,12 +22,12 @@ pub struct Service {
 // #[cfg(target_os = "linux")]
 impl Service {
     /// 新建一个服务结构体
-    pub fn new(name: &str, cmd: &str, timeout: u16) -> Self {
+    pub fn new(workdir: &str, name: &str, cmd: &str, timeout: u16) -> Self {
         Service {
             name: name.to_owned(),
             timeout: timeout,
             command: cmd.to_owned(),
-            workdir: "/".to_owned(),
+            workdir: workdir.to_owned(),
         }
     }
 
