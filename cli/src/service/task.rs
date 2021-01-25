@@ -51,11 +51,27 @@ impl TaskService for Task {
     /// 开始命令执行
     fn update(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
-        for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.app.workdir, true) {
-                res.extend(x);
+        // 1. 本地打包
+        match self.start() {
+            Ok(s) => {
+                res.extend(s);
+                // 2. 上传并进行远程处理
+                match self.remote("update") {
+                    Ok(rs) => {
+                        res.extend(rs);
+                        match self.end() {
+                            Ok(es) => {
+                                res.extend(es);
+                            }
+                            Err(err) => res.push(format!("error:{}", err)),
+                        }
+                    }
+                    Err(err) => res.push(format!("error:{}", err)),
+                }
             }
+            Err(err) => res.push(format!("error:{}", err)),
         }
+
         Ok(res)
     }
 
@@ -87,14 +103,7 @@ impl TaskService for Task {
                     "workdir": self.remote.workdir,
                     "action": action,
                     "filePath": relative_path,
-                    // "app": {
-                    //     "symbol": self.symbol,
-                    //     "name": self.name,
-                    //     "version": self.version,
-                    //     "isServer": self.is_service,
-                    //     "description": self.description,
-                    //     // "execStart": self.exec_start
-                    // },
+                    "app": self.app,
                     "start": self.remote.start,
                     "end": self.remote.end
                 }));

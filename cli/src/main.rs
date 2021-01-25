@@ -43,6 +43,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .takes_value(true),
                 ),
         )
+        .subcommand(
+            App::new("update")
+                .about("app build and remote update")
+                .version("0.1.0")
+                .author("Shaipe E. <shaipe@sina.com>")
+                .arg(
+                    Arg::with_name("name")
+                        .short("n")
+                        .long("name")
+                        // .value_name("FILE")
+                        // .help("set name of program")
+                        .takes_value(true),
+                ),
+        )
         .get_matches();
 
     // 加载配置文件
@@ -74,6 +88,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         // 应用更新
         else if sub_cmd == "update" {
+            if let Some(sub_matches) = sub_args {
+                if let Some(name) = sub_matches.value_of("name") {
+                    if let Some(tsk) = cnf.get_task(name) {
+                        let res = tsk.update();
+                        println!("{:?}", res);
+                    }
+                }
+            }
         }
         // 执行子命令结束
         return Ok(());

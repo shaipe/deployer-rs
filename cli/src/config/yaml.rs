@@ -27,6 +27,7 @@ impl YamlImpl for Yaml {
 
     /// 获取bool型
     fn get_bool(&self) -> bool {
+        println!("{:?}", self);
         if let Some(v) = self.as_bool() {
             v
         } else {
@@ -79,12 +80,19 @@ pub fn load_task(doc: &Yaml) -> Task {
 
 /// 加载应用
 pub fn load_app(doc: &Yaml) -> App {
+    let exec_arg = doc["exec_arg"].get_string("");
+
     App {
         symbol: doc["symbol"].get_string(""),
         name: doc["name"].get_string(""),
         description: doc["description"].get_string(""),
         port: 3000,
         exec_start: doc["exec_start"].get_string(""),
+        exec_arg: if exec_arg.len() > 0 {
+            Some(exec_arg)
+        } else {
+            None
+        },
         version: doc["version"].get_string("0.1.0"),
         lang: doc["lang"].get_string("rust"),
         workdir: doc["workdir"].get_string("./"),
