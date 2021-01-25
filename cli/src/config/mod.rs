@@ -6,17 +6,13 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::result::Result;
-use yaml_rust::Yaml;
-// use std::path::Path;
-// use micro_app::App;
 
-mod app;
+
 mod remote;
 mod task;
 mod yaml;
 pub(crate) use remote::Remote;
 pub(crate) use task::Task;
-use micro_app::App;
 use yaml::{YamlImpl,load_tasks};
 
 /// 配置信息

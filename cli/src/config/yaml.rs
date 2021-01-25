@@ -2,8 +2,7 @@
 //! 使用yml格式的配置中加载
 //! create by shaipe 20210125
 
-
-use super::{Remote,Task};
+use super::{Remote, Task};
 use micro_app::App;
 use yaml_rust::Yaml;
 
@@ -53,11 +52,32 @@ impl YamlImpl for Yaml {
     }
 }
 
-
-pub fn load_tasks(doc: &Yaml) -> Vec<Task>{
-    vec![]
+/// 加载任务集
+pub fn load_tasks(doc: &Yaml) -> Vec<Task> {
+    let mut res: Vec<Task> = Vec::new();
+    if doc.is_array() {
+        if let Some(ts) = doc.as_vec() {
+            for doc_task in ts.iter() {
+                let task = load_task(doc_task);
+                res.push(task);
+            }
+        }
+    }
+    res
 }
 
+/// 加载任务
+pub fn load_task(doc: &Yaml) -> Task {
+    Task {
+        name: doc["name"].get_string(""),
+        app: load_app(&doc["app"]),
+        remote: load_remote(&doc["remote"]),
+        start: doc["start"].get_vec(),
+        end: doc["end"].get_vec(),
+    }
+}
+
+/// 加载应用
 pub fn load_app(doc: &Yaml) -> App {
     App {
         symbol: doc["symbol"].get_string(""),
@@ -73,7 +93,8 @@ pub fn load_app(doc: &Yaml) -> App {
     }
 }
 
-pub fn load_remote(doc: &Yaml) ->Remote{
+/// 加载远程处理配置
+pub fn load_remote(doc: &Yaml) -> Remote {
     Remote {
         server: doc["server"].get_string("127.0.0.1"),
         port: if let Some(p) = doc["port"].as_i64() {

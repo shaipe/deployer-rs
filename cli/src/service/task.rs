@@ -2,15 +2,15 @@
 //! 命令行操作应用类
 //! create by shaipe 20210102
 
-use micro_app::App;
-use crate::RemoteImpl;
+use super::RemoteService;
 use tube_error::Result;
 use crate::config::Task;
 
 /// 对app应用处理
-pub trait TaskImpl {
+pub trait TaskService {
+    /// 安装应用
     fn install(&self) -> Result<Vec<String>>;
-
+    /// 更新应用任务
     fn update(&self) -> Result<Vec<String>>;
 
     fn start(&self) -> Result<Vec<String>>;
@@ -20,7 +20,7 @@ pub trait TaskImpl {
     fn end(&self) -> Result<Vec<String>>;
 }
 
-impl TaskImpl for Task {
+impl TaskService for Task {
     /// 开始命令执行
     fn install(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();

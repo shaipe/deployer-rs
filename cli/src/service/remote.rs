@@ -9,7 +9,7 @@ use std::io::Read;
 use std::path::Path;
 
 /// 远程处理接口
-pub trait RemoteImpl {
+pub trait RemoteService {
     
     /// 上传文件
     fn upload(
@@ -23,7 +23,7 @@ pub trait RemoteImpl {
     fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error>;
 }
 
-impl RemoteImpl for Remote {
+impl RemoteService for Remote {
     /// 文件上传
     fn upload(
         &self,
