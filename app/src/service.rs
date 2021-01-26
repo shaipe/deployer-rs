@@ -37,23 +37,28 @@ impl Service {
     }
 
     /// 服务安装
-    pub fn install(&self) -> Result<bool> {
+    pub fn install(&self) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
         if cfg!(target_os = "linux") {
             let mut cmd = self.exec.clone();
             if let Some(arg) = self.args.clone() {
-                cmd = format!(
-                    "{} {}",
-                    self.exec,
-                    arg.replace("$workdir", &self.workdir)
-                );
+                cmd = format!("{} {}", self.exec, arg);
             }
-            return Service::install_linux_service(&self.workdir, &self.name, &cmd, self.timeout);
+            match Service::install_linux_service(
+                &self.workdir,
+                &self.name,
+                &cmd,
+                self.timeout,
+            ){
+                Ok(s)=>res.push(s),
+                Err(err) => res.push(format!("error: {}", err)),
+            };
         } else if cfg!(target_os = "windows") {
-            println!("Hello Windows");
+            res.push("Hello Windows".to_owned());
         } else {
-            println!("Unknown os");
+            res.push("Unknown os".to_owned());
         }
-        Ok(false)
+        Ok(res)
     }
 
     // /// 获取java包启动脚本
@@ -131,7 +136,7 @@ impl Service {
         name: &str,
         cmd: &str,
         timeout: u16,
-    ) -> Result<bool> {
+    ) -> Result<String> {
         let path = format!("/lib/systemd/system/{name}.service", name = name);
         let srv_content = format!(
             r#"
@@ -160,7 +165,7 @@ WantedBy=multi-user.target
         // 设置应用为自启动
 
         if let Ok(_r) = run_cmd(&format!("systemctl enable {}", name), "", true) {
-            return Ok(true);
+            return Ok("install service successfully!".to_owned());
         }
         Err(error!("install service failed"))
     }
