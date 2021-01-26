@@ -79,7 +79,10 @@ impl TaskService for Task {
     fn start(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.start {
-            if let Ok(x) = run_cmd(cmd, &self.app.code_dir, false) {
+            let c = cmd
+                .replace("$symbol", &self.symbol)
+                .replace("$name", &self.name);
+            if let Ok(x) = run_cmd(&c, &self.app.code_dir, false) {
                 res.extend(x);
             }
         }
@@ -87,6 +90,7 @@ impl TaskService for Task {
     }
 
     /// 远程相关处理
+
     fn remote(&self, action: &str) -> Result<Vec<String>> {
         use std::path::Path;
         if let Some(remote) = self.remote.clone() {
@@ -101,6 +105,11 @@ impl TaskService for Task {
                 println!("upload file success path : {:?}", relative_path);
                 if relative_path.len() > 0 {
                     let yy = remote.call(serde_json::json!({
+                        "symbol": self.symbol,
+                        "name": self.name,
+                        "appType": self.app_type,
+                        "service": self.service,
+                        // "docker": Option<Docker>,
                         "workdir": remote.workdir,
                         "action": action,
                         "filePath": relative_path,
@@ -119,7 +128,10 @@ impl TaskService for Task {
     fn end(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         for cmd in &self.end {
-            if let Ok(x) = run_cmd(cmd, &self.app.code_dir, false) {
+            let c = cmd
+                .replace("$symbol", &self.symbol)
+                .replace("$name", &self.name);
+            if let Ok(x) = run_cmd(&c, &self.app.code_dir, false) {
                 res.extend(x);
             }
         }

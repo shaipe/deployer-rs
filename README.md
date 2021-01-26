@@ -37,3 +37,8 @@ a add core https://www.google.com
 
 打开
 a open core
+
+### Server 
+
+服务端,根据类型进行不同的业务处理
+action: install, update

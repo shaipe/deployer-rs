@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(_e) => panic!("配置文件加载错误."),
     };
 
-    // println!("c::{:?}", cnf);
+    println!("c::{:?}", cnf);
 
     // 对子命令进行处理
     if sub_cmd.len() > 0 {

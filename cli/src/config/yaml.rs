@@ -4,6 +4,7 @@
 
 use super::Task;
 use micro_app::{App, Docker, Remote, Service};
+use std::collections::HashMap;
 use yaml_rust::Yaml;
 
 /// 基于yaml扩展接口
@@ -72,17 +73,22 @@ pub fn load_task(doc: &Yaml) -> Task {
     let name = doc["name"].get_string("");
     let symbol = doc["symbol"].get_string("");
     let desc = doc["description"].get_string("");
+    let app = load_app(&name, &symbol, &desc, &doc["app"]);
+    let replaces: HashMap<&str, String> = [("$symbol", symbol.clone()), ("$name", name.clone())]
+        .iter()
+        .cloned()
+        .collect();
     Task {
         name: name.clone(),
         symbol: symbol.clone(),
         description: desc.clone(),
         app_type: doc["type"].get_string(""),
-        app: load_app(&name, &symbol, &desc, &doc["app"]),
+        app: app.clone(),
         remote: load_remote(&doc["remote"]),
-        service: load_service(&name, &symbol, &doc["service"]),
+        service: load_service(&app, &doc["service"]),
         docker: load_docker(&doc["docker"]),
-        start: doc["start"].get_vec(),
-        end: doc["end"].get_vec(),
+        start: vec_var_replace(doc["start"].get_vec(), replaces.clone()),
+        end: vec_var_replace(doc["end"].get_vec(), replaces.clone()),
     }
 }
 
@@ -95,21 +101,43 @@ pub fn load_docker(doc: &Yaml) -> Option<Docker> {
 }
 
 /// 加载服务配置
-pub fn load_service(name: &str, symbol: &str, doc: &Yaml) -> Option<Service> {
+pub fn load_service(app: &App, doc: &Yaml) -> Option<Service> {
     if doc.is_null() {
         None
     } else {
-        let mut srv_name = name.to_owned();
-        if symbol.len() > 0 {
-            srv_name = format!("{}_{}", symbol, name);
+        let mut srv_name = app.name.clone();
+        if app.symbol.len() > 0 {
+            srv_name = format!("{}_{}", app.symbol, app.name);
         }
-        let arg = doc["args"].get_string("");
 
+        let workdir = format!(
+            "{}/{}/{}",
+            doc["workdir"].get_string(""),
+            app.symbol,
+            app.name
+        );
+
+        let replaces: HashMap<&str, String> = [
+            ("$workdir", workdir.clone()),
+            ("$symbol", app.symbol.clone()),
+            ("$name", app.name.clone()),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        // 执行启动程序
+        let mut exec = var_replace(doc["exec"].get_string(""), replaces.clone());
+        if exec.len() < 1 {
+            exec = format!("{}/{}", workdir, app.app_name());
+        }
+        // 处理服务执行参数
+        let arg = var_replace(doc["args"].get_string(""), replaces.clone());
         Some(Service {
             name: srv_name,
-            exec: doc["workdir"].get_string(""),
+            exec: exec,
             args: if arg.len() > 0 { Some(arg) } else { None },
-            workdir: doc["workdir"].get_string(""),
+            workdir: workdir,
             timeout: 60,
         })
     }
@@ -123,7 +151,7 @@ pub fn load_app(name: &str, symbol: &str, desc: &str, doc: &Yaml) -> App {
         description: desc.to_owned(),
         version: doc["version"].get_string("0.1.0"),
         lang: doc["lang"].get_string("rust"),
-        code_dir: doc["workdir"].get_string("./"),
+        code_dir: doc["code_dir"].get_string("."),
     }
 }
 
@@ -139,8 +167,31 @@ pub fn load_remote(doc: &Yaml) -> Option<Remote> {
         } else {
             3000
         },
-        workdir: doc["workdir"].get_string("./"),
+        workdir: doc["workdir"].get_string("."),
         start: doc["start"].get_vec(),
         end: doc["end"].get_vec(),
     })
+}
+
+/// 对变量进行替换
+fn var_replace(mut sources: String, replaces: HashMap<&str, String>) -> String {
+    if sources.len() < 1 {
+        return sources;
+    }
+    for (k, v) in replaces {
+        sources = sources.replace(k, &v);
+    }
+    sources
+}
+
+/// 替换数组中的关键字变量
+fn vec_var_replace(sources: Vec<String>, replaces: HashMap<&str, String>) -> Vec<String> {
+    let mut res = Vec::new();
+    for mut s in sources {
+        for (k, v) in replaces.clone() {
+           s = s.replace(k, &v);
+        }
+        res.push(s);
+    }
+    res
 }
