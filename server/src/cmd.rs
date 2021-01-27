@@ -30,54 +30,89 @@ pub async fn handler(
         match serde_json::from_str(s) {
             Ok(v) => {
                 let val: Cmd = v;
-
+                let wwk = &workdir.clone();
                 // // println!("{:?}", val);
-                let env_dir = if val.workdir.len() < 1 {
-                    &val.workdir
+                let env_dir = if let Some(wk) = &val.workdir {
+                    if wk.len() > 0 {
+                        wk
+                    } else {
+                        &wwk
+                    }
                 } else {
-                    &workdir
+                    &wwk
                 };
 
                 let mut cmd = val.clone();
                 // 如果传入的为空,则使用服务器配置的服务主目录
-                cmd.workdir = env_dir.to_owned().clone();
+                cmd.workdir = Some(env_dir.to_owned().clone());
 
-                let symbol = &cmd.symbol;
-                let name = &cmd.name;
-                // 开始处理命令行中的变量
-                cmd.start = cmd
-                    .start
-                    .iter()
-                    .map(|x| {
-                        x.replace("$symbol", symbol)
-                            .replace("$name", name)
-                            .replace("$workdir", &env_dir)
-                    })
-                    .collect();
+                let symbol = match &cmd.symbol {
+                    Some(s) => &s,
+                    None => "",
+                };
+
+                let name = match &cmd.name {
+                    Some(s) => s.clone(),
+                    None => "".to_owned(),
+                };
+
+                if let Some(sc) = cmd.start {
+                    // 开始处理命令行中的变量
+                    cmd.start = Some(
+                        sc.iter()
+                            .map(|x| {
+                                x.replace("$symbol", &symbol)
+                                    .replace("$name", &name)
+                                    .replace("$workdir", &env_dir)
+                            })
+                            .collect(),
+                    );
+                }
+
                 // 完成后执行命令变量处理
-                cmd.end = cmd
-                    .end
-                    .iter()
-                    .map(|x| {
-                        x.replace("$symbol", symbol)
-                            .replace("$name", name)
-                            .replace("$workdir", &env_dir)
-                    })
-                    .collect();
+                if let Some(ec) = cmd.end.clone() {
+                    // 开始处理命令行中的变量
+                    cmd.start = Some(
+                        ec.iter()
+                            .map(|x| {
+                                x.replace("$symbol", symbol)
+                                    .replace("$name", &name)
+                                    .replace("$workdir", &env_dir)
+                            })
+                            .collect(),
+                    );
+                }
 
                 // 1. 执行开始命令
-                if let Ok(s) = exec_cmd(cmd.start.clone(), env_dir) {
-                    res.extend(s);
+                if let Some(start_cmd) = cmd.start.clone() {
+                    if let Ok(s) = exec_cmd(start_cmd.clone(), env_dir) {
+                        res.extend(s);
+                    }
                 }
 
                 // 2. 对action进行处理
-                if cmd.action.len() > 0 {
-                    let file_path = Path::new(&cmd.file_path);
-                    if file_path.exists() {
-                        match cmd.clone().execute() {
+                if let Some(act) = cmd.clone().action {
+                    if act.len() > 0 {
+                        match cmd.execute() {
                             Ok(s) => res.extend(s),
                             Err(err) => res.push(format!("error: {}", err)),
                         }
+                    }
+                } else if let Some(cmds) = cmd.command {
+                    let wk_dir = match cmd.workdir {
+                        Some(dir) => dir,
+                        None => "./".to_owned(),
+                    };
+                    match exec_cmd(cmds, &wk_dir) {
+                        Ok(s) => res.extend(s),
+                        Err(err) => res.push(format!("error: {}", err)),
+                    }
+                }
+
+                // 3. 执行结束命令
+                if let Some(end_cmd) = cmd.end.clone() {
+                    if let Ok(s) = exec_cmd(end_cmd.clone(), env_dir) {
+                        res.extend(s);
                     }
                 }
             }
@@ -99,28 +134,32 @@ pub async fn handler(
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cmd {
-    action: String,
-    workdir: String,
-    symbol: String,
-    name: String,
+    action: Option<String>,
+    workdir: Option<String>,
+    symbol: Option<String>,
+    name: Option<String>,
     #[serde(rename = "appType")]
-    app_type: String,
+    app_type: Option<String>,
     #[serde(rename = "filePath")]
-    file_path: String,
+    file_path: Option<String>,
     service: Option<Service>,
     docker: Option<Docker>,
-    start: Vec<String>,
-    end: Vec<String>,
+    start: Option<Vec<String>>,
+    end: Option<Vec<String>>,
+    command: Option<Vec<String>>,
 }
 
 impl Cmd {
     /// 远程命令执行
     pub fn execute(&self) -> tube_error::Result<Vec<String>> {
-        if self.action == "install" {
-            return self.install();
-        } else {
-            return self.update();
+        if let Some(act) = self.clone().action {
+            if act == "install" {
+                return self.install();
+            } else {
+                return self.update();
+            }
         }
+        Ok(vec![])
     }
 
     /// 应用安装
@@ -128,81 +167,94 @@ impl Cmd {
         let mut res: Vec<String> = Vec::new();
 
         // 把压缩文件解压到指定的文件夹，可直接调用一个服务器上的脚本来处理
-        let fp = Path::new(&self.file_path);
-        if fp.exists() {
-            // 判断应用类型
-            if self.app_type == "service" || self.app_type == "Service" {
-                if let Some(srv) = self.service.clone() {
-                    // 1. 创建目录
-                    let app_path = Path::new(&srv.workdir);
-                    if !app_path.exists() {
-                        let _ = std::fs::create_dir_all(&app_path);
-                    }
+        if let Some(f_path) = self.clone().file_path {
+            let fp = Path::new(&f_path);
+            if fp.exists() {
+                if let Some(app_type) = self.clone().app_type {
+                    // 判断应用类型
+                    if app_type == "service" || app_type == "Service" {
+                        if let Some(srv) = self.service.clone() {
+                            // 1. 创建目录
+                            let app_path = Path::new(&srv.workdir);
+                            if !app_path.exists() {
+                                let _ = std::fs::create_dir_all(&app_path);
+                            }
 
-                    // 2. 解压文件
-                    match tube::unzip(&self.file_path, &srv.workdir) {
-                        Ok(_) => res.push("unzip successfully".to_owned()),
-                        Err(err) => res.push(format!("error: {}", err)),
-                    };
-                    
-                    // 3. 配置安装服务
-                    match srv.install() {
-                        Ok(v) => res.extend(v),
-                        Err(err) => res.push(format!("error: {}", err)),
+                            // 2. 解压文件
+                            match tube::unzip(&f_path, &srv.workdir) {
+                                Ok(_) => res.push("unzip successfully".to_owned()),
+                                Err(err) => res.push(format!("error: {}", err)),
+                            };
+
+                            // 3. 配置安装服务
+                            match srv.install() {
+                                Ok(v) => res.extend(v),
+                                Err(err) => res.push(format!("error: {}", err)),
+                            }
+                        }
+                    }
+                    // Docker
+                    else if app_type == "docker" || app_type == "Docker" {
+                    }
+                    // Files
+                    else {
                     }
                 }
             }
-            // Docker
-            else if self.app_type == "docker" || self.app_type == "Docker" {
-            }
-            // Files
-            else {
-            }
         }
-
         Ok(res)
     }
 
     /// 应用更新
     fn update(&self) -> tube_error::Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
-        let fp = Path::new(&self.file_path);
-        if !fp.exists() {
-            return Err(error!("file not found"));
-        }
-        // 判断应用类型
-        if self.app_type == "service" || self.app_type == "Service" {
-            if let Some(srv) = self.service.clone() {
-                // 1. 停止现有服务
-                match Service::stop(&srv.name) {
-                    Ok(_v) => res.push("stop service successfully".to_owned()),
-                    Err(err) => res.push(format!("error: {}", err)),
+
+        if let Some(f_path) = self.clone().file_path {
+            let fp = Path::new(&f_path);
+            if !fp.exists() {
+                return Err(error!("file not found"));
+            }
+            if let Some(app_type) = self.clone().app_type {
+                // 判断应用类型
+                if app_type == "service" || app_type == "Service" {
+                    if let Some(srv) = self.service.clone() {
+                        // 1. 停止现有服务
+                        match Service::stop(&srv.name) {
+                            Ok(_v) => res.push("stop service successfully".to_owned()),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        }
+
+                        // 2. 备份原程序
+                        match srv.backup() {
+                            Ok(_v) => res.push("backup service successfully".to_owned()),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        }
+
+                        let workdir = match self.clone().workdir {
+                            Some(w) => w,
+                            None => ".".to_owned(),
+                        };
+
+                        // 3. 文件覆盖
+                        match tube::unzip(&f_path, &workdir) {
+                            Ok(_) => res.push("unzip successfully".to_owned()),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        };
+
+                        // 4. 启动服务
+                        match Service::start(&srv.name) {
+                            Ok(_v) => res.push("start service successfully".to_owned()),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        }
+                    }
                 }
-
-                // 2. 备份原程序
-                match srv.backup() {
-                    Ok(_v) => res.push("backup service successfully".to_owned()),
-                    Err(err) => res.push(format!("error: {}", err)),
+                // Docker
+                else if app_type == "docker" || app_type == "Docker" {
                 }
-
-                // 3. 文件覆盖
-                match tube::unzip(&self.file_path, &self.workdir) {
-                    Ok(_) => res.push("unzip successfully".to_owned()),
-                    Err(err) => res.push(format!("error: {}", err)),
-                };
-
-                // 4. 启动服务
-                match Service::start(&srv.name) {
-                    Ok(_v) => res.push("start service successfully".to_owned()),
-                    Err(err) => res.push(format!("error: {}", err)),
+                // Files
+                else {
                 }
             }
-        }
-        // Docker
-        else if self.app_type == "docker" || self.app_type == "Docker" {
-        }
-        // Files
-        else {
         }
 
         Ok(res)
