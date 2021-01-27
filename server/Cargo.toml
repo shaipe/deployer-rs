@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 actix-multipart = "0.3.0"
 actix-web = "3.3.2"
+actix-cors = "0.5.4"
 futures = "0.3.12"
 bytes = "1.0.1"
 clap = "2.33.3"

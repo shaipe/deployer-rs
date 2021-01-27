@@ -336,12 +336,12 @@ pub(crate) fn run_cmd(
 
     let res = if enable_capture {
         Command::with_args(cmd_name, &["-c", cmd])
-            .set_dir(env_dir.clone())
+            .set_dir(env_dir)
             .enable_capture()
             .run()
     } else {
         Command::with_args(cmd_name, &["-c", cmd])
-            .set_dir(env_dir.clone())
+            .set_dir(env_dir)
             .run()
     };
 

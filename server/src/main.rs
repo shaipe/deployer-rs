@@ -124,6 +124,13 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
+            .wrap(
+                // 设置允许跨域请求
+                actix_cors::Cors::default()
+                    .allow_any_origin()
+                    .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+                    .max_age(3600),
+            )
             .service(web::resource("/cmd").route(web::post().to(cmd::handler)))
             .service(web::resource("/git").route(web::post().to(git::handler)))
             .service(
