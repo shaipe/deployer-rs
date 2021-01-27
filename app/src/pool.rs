@@ -45,7 +45,7 @@ impl Pool {
         }
         // 给定应用池文件
         let pool_file = format!("{}/pool.json", workdir);
-        println!("{}", pool_file);
+        // println!("{}", pool_file);
         let pool_path = Path::new(&pool_file);
         if pool_path.exists() {
             // Open the file in read-only mode with buffer.

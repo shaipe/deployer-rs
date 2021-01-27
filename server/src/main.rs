@@ -63,13 +63,9 @@ async fn main() -> std::io::Result<()> {
             match std::env::current_exe() {
                 Ok(p) => {
                     let name = p.file_name().unwrap().to_str().unwrap();
-                    let workdir = format!("{}",p.parent().unwrap().display());
+                    let workdir = format!("{}", p.parent().unwrap().display());
                     // 设置启动命令,需要指定配置文件路径,因为以服务器动后的当前目录为 / 根目录
-                    let cmd = format!(
-                        "{} -c {}/conf/server.yml",
-                        p.display(),
-                        workdir
-                    );
+                    let cmd = format!("{} -c {}/conf/server.yml", p.display(), workdir);
                     // println!("{} {}", name, cmd);
                     // 安装服务
                     match micro_app::Service::install_linux_service(&workdir, name, &cmd, 60) {
@@ -106,7 +102,7 @@ async fn main() -> std::io::Result<()> {
 
 /// web服务启动
 async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
+    // std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
 
     // 加载配置信息
     let conf = match Config::new(conf_path) {
@@ -119,7 +115,7 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
 
     // 设置服务器运行ip和端口信息
     let ip = format!("{}:{}", conf.server.ip, conf.server.port);
-
+    log4rs::init_file("conf/log.yml", Default::default()).unwrap();
     // 启动一个web服务
     HttpServer::new(move || {
         App::new()
