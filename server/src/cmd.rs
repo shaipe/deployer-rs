@@ -198,6 +198,10 @@ impl Cmd {
                     }
                     // Files
                     else {
+                        match self.files_deal() {
+                            Ok(v) => res.extend(v),
+                            Err(err) => res.push(format!("error: {}", err)),
+                        }
                     }
                 }
             }
@@ -253,10 +257,47 @@ impl Cmd {
                 }
                 // Files
                 else {
+                    match self.files_deal() {
+                        Ok(v) => res.extend(v),
+                        Err(err) => res.push(format!("error: {}", err)),
+                    }
                 }
             }
         }
 
+        Ok(res)
+    }
+
+    /// 文件的相关处理
+    fn files_deal(&self) -> tube_error::Result<Vec<String>> {
+        let mut res = Vec::new();
+        if let Some(f_path) = self.clone().file_path {
+            let file_path = Path::new(&f_path);
+            if file_path.exists() {
+                // 1. 创建目录
+                if let Some(wk) = self.clone().workdir {
+                    let dir_path = Path::new(&wk);
+                    if !dir_path.exists() {
+                        let _ = std::fs::create_dir_all(&dir_path);
+                        res.push(format!("crate dir {} successfully", wk));
+                    }
+                    
+                    // 获取文件名
+                    let file_name = match file_path.file_name(){
+                        Some(f)=>f.to_str().unwrap(),
+                        None => ""
+                    };
+
+                    // 复制目标路径
+                    let to_file = format!("{}/{}", wk, file_name);                    
+                    // 2. 文件复制
+                    match std::fs::copy(file_path, &to_file) {
+                        Ok(_) => res.push(format!("copy {} successfully", f_path)),
+                        Err(err) => res.push(format!("error: {}", err)),
+                    }
+                }
+            }
+        }
         Ok(res)
     }
 }
