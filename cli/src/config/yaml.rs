@@ -78,15 +78,30 @@ pub fn load_task(doc: &Yaml) -> Task {
         .iter()
         .cloned()
         .collect();
+    let app_type = doc["type"].get_string("files");
+    // 类型为服务时才加载服务信息
+    let srv = if app_type == "service" {
+        load_service(&app, &doc["service"])
+    } else {
+        None
+    };
+
+    // 加载容器类型
+    let dock = if app_type == "docker" {
+        load_docker(&doc["docker"])
+    } else {
+        None
+    };
+
     Task {
         name: name.clone(),
         symbol: symbol.clone(),
         description: desc.clone(),
-        app_type: doc["type"].get_string(""),
+        app_type: app_type,
         app: app.clone(),
         remote: load_remote(&doc["remote"]),
-        service: load_service(&app, &doc["service"]),
-        docker: load_docker(&doc["docker"]),
+        service: srv,
+        docker: dock,
         start: vec_var_replace(doc["start"].get_vec(), replaces.clone()),
         end: vec_var_replace(doc["end"].get_vec(), replaces.clone()),
     }
@@ -189,7 +204,7 @@ fn vec_var_replace(sources: Vec<String>, replaces: HashMap<&str, String>) -> Vec
     let mut res = Vec::new();
     for mut s in sources {
         for (k, v) in replaces.clone() {
-           s = s.replace(k, &v);
+            s = s.replace(k, &v);
         }
         res.push(s);
     }

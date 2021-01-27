@@ -93,6 +93,7 @@ impl TaskService for Task {
 
     fn remote(&self, action: &str) -> Result<Vec<String>> {
         use std::path::Path;
+        let mut res = Vec::new();
         if let Some(remote) = self.remote.clone() {
             // 1. 复制并上传文件
             let f_str = format!("{}/{}.zip", self.app.code_dir, self.name);
@@ -102,9 +103,9 @@ impl TaskService for Task {
 
             // 2. 调用执行远端命令
             if let Ok(relative_path) = up_res {
-                println!("upload file success path : {:?}", relative_path);
+                res.push(format!("upload file success path : {:?}", relative_path));
                 if relative_path.len() > 0 {
-                    let yy = remote.call(serde_json::json!({
+                    let cmd_res = remote.call(serde_json::json!({
                         "symbol": self.symbol,
                         "name": self.name,
                         "appType": self.app_type,
@@ -113,15 +114,20 @@ impl TaskService for Task {
                         "workdir": remote.workdir,
                         "action": action,
                         "filePath": relative_path,
-                        "app": self.app,
+                        // "app": self.app, 远程不再接收
                         "start": remote.start,
                         "end": remote.end
                     }));
-                    println!("{:?}", yy);
+                    match cmd_res {
+                        Ok(s)=>{
+                            res.extend(s);
+                        }
+                        Err(err) => println!("remote call error: {}", err),
+                    }
                 }
             }
         }
-        Ok(vec![])
+        Ok(res)
     }
 
     /// 执行完后的处理

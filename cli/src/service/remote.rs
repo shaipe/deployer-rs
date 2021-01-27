@@ -7,20 +7,20 @@ use reqwest::blocking::multipart;
 use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
+use tube_error::Result;
 
 /// 远程处理接口
 pub trait RemoteService {
-    
     /// 上传文件
     fn upload(
         &self,
         name: String,
         file_path: &Path,
         map: Option<HashMap<String, String>>,
-    ) -> Result<String, reqwest::Error>;
+    ) -> Result<String>;
 
     /// 调用远程命令
-    fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error>;
+    fn call(&self, params: serde_json::Value) -> Result<Vec<String>>;
 }
 
 /// 远程调用业务实现
@@ -31,9 +31,13 @@ impl RemoteService for Remote {
         name: String,
         file_path: &Path,
         map: Option<HashMap<String, String>>,
-    ) -> Result<String, reqwest::Error> {
-        // println!("url: {}, name: {}, file_path: {:?}", uri, name, file_path);
-        let mut form = multipart::Form::new().file(name, file_path).unwrap();
+    ) -> Result<String> {
+        // println!("url: {},  file_path: {:?}", name, file_path);
+
+        let mut form = match multipart::Form::new().file(name, file_path) {
+            Ok(f) => f,
+            Err(err) => return Err(error!(format!("{:?}", err))),
+        };
 
         if let Some(m) = map {
             for (k, v) in m {
@@ -48,30 +52,47 @@ impl RemoteService for Remote {
             .multipart(form);
 
         // Send request
-        let mut response = requestbuilder.send().unwrap();
+        let mut response = match requestbuilder.send() {
+            Ok(res) => res,
+            Err(err) => return Err(error!(format!("{:?}", err))),
+        };
 
         if response.status().as_u16() == 200 {
             let mut response_data: Vec<u8> = vec![];
-            response.read_to_end(&mut response_data).unwrap();
-            let res = std::str::from_utf8(&response_data).unwrap();
-            println!("{}", res);
-            // 转换为json_value
-            let val: serde_json::Value = serde_json::from_str(res).unwrap();
+            match response.read_to_end(&mut response_data) {
+                Ok(res) => res,
+                Err(err) => return Err(error!(format!("{:?}", err))),
+            };
 
-            // 获取出上传后的相对路径
-            if val["result"].is_object() {
-                if let Some(s) = val["result"]["relativePath"].as_str() {
-                    return Ok(s.to_owned());
+            // let mut res_str = String::new();
+            // response.read_to_string(mut res_str).unwrap();
+
+            // let x: serde_json::Value = serde_json::from_reader(response_data).unwrap();
+
+            // 获取返回的字符串
+            if let Ok(res) = std::str::from_utf8(&response_data) {
+                // 转换为json_value
+                let val: serde_json::Value = match serde_json::from_str(res) {
+                    Ok(res) => res,
+                    Err(err) => return Err(error!(format!("{:?}", err))),
+                };
+
+                // 获取出上传后的相对路径
+                if val["result"].is_object() {
+                    if let Some(s) = val["result"]["relativePath"].as_str() {
+                        return Ok(s.to_owned());
+                    }
                 }
             }
         }
 
-        Ok("".to_owned())
+        Err(error!("upload file failed"))
     }
 
     /// 调用远程命令
-    fn call(&self, params: serde_json::Value) -> Result<String, reqwest::Error> {
-        // println!("cmd url: {:?}", format!("{}/cmd", self.get_url()));
+    fn call(&self, params: serde_json::Value) -> Result<Vec<String>> {
+        let mut res = Vec::new();
+
         // Compose a request
         let client = reqwest::blocking::Client::new();
         let requestbuilder = client
@@ -84,22 +105,27 @@ impl RemoteService for Remote {
         if response.status().as_u16() == 200 {
             let mut response_data: Vec<u8> = vec![];
             response.read_to_end(&mut response_data).unwrap();
-            let res = std::str::from_utf8(&response_data).unwrap();
-            println!("response {:?}", res);
-            // 转换为json_value
-            let val: serde_json::Value = serde_json::from_str(res).unwrap();
 
-            // 获取出上传后的相对路径
-            // if val["result"].is_object() {
-            //     if let Some(s) = val["result"]["relativePath"].as_str() {
-            //         return Ok(s.to_owned());
-            //     }
-            // }
+            // 获取返回的字符串
+            if let Ok(res_str) = std::str::from_utf8(&response_data) {
+                // 转换为json_value
+                let val: serde_json::Value = match serde_json::from_str(res_str) {
+                    Ok(s) => s,
+                    Err(err) => return Err(error!(format!("{:?}", err))),
+                };
 
-            println!("{:?}", val);
+                // 获取出上传后的相对路径
+                if let Some(arr) = val["result"].as_array() {
+                    for a in arr {
+                        if let Some(s) = a.as_str() {
+                            res.push(s.to_owned());
+                        }
+                    }
+                }
+            }
         }
 
-        Ok("".to_owned())
+        Ok(res)
     }
 }
 // const URL: &'static str = "http://localhost:3000";
