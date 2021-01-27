@@ -14,12 +14,14 @@ mod cmd;
 mod config;
 mod git;
 mod upload;
+mod loging;
 
 use actix_web::{middleware, web, App, HttpServer};
 use config::Config;
 // 在主文件中必须要引入Error类型,来定义整个包的基础错误类型
 use clap::{crate_authors, crate_description, crate_version, App as ClapApp, Arg};
 use tube_error::Error;
+
 
 /// 应用启动入口
 #[actix_web::main]
@@ -113,9 +115,11 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
         }
     };
 
+    loging::initialise_logging();
+
     // 设置服务器运行ip和端口信息
     let ip = format!("{}:{}", conf.server.ip, conf.server.port);
-    log4rs::init_file("conf/log.yml", Default::default()).unwrap();
+    // log4rs::init_file("conf/log.yml", Default::default()).unwrap();
     // 启动一个web服务
     HttpServer::new(move || {
         App::new()
