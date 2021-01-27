@@ -15,6 +15,7 @@ use micro_app::Pool;
 // }
 
 /// 微服务应用池管理。
+#[allow(dead_code)]
 async fn handler(
     _req: HttpRequest,
     mut payload: web::Payload,
@@ -45,6 +46,7 @@ async fn handler(
 }
 
 /// api接口配置
+#[allow(dead_code)]
 pub fn service_config(scf: &mut web::ServiceConfig) {
     if let Some(cnf) = super::config::get_config() {
         // println!("{:?}", cnf.workdir);

@@ -137,7 +137,7 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
                 web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
             )
             .data(conf.workdir.clone())
-            .configure(app::service_config)
+            // .configure(app::service_config)
     })
     .bind(ip)?
     .run()
