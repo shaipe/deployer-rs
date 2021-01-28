@@ -3,11 +3,11 @@ extern crate reqwest;
 // use multipart::client::lazy::Multipart;
 // use reqwest::mime;
 use std::io::Read;
-use std::process;
+// use std::process;
 
 const URL: &'static str = "http://localhost:3000";
-const UPLOAD_FORM_FIELD_NAME: &'static str = "thefile";
-const FILENAME: &'static str = "sample.txt";
+// const UPLOAD_FORM_FIELD_NAME: &'static str = "thefile";
+// const FILENAME: &'static str = "sample.txt";
 
 /// This is example code for using the multipart crate with reqwest to
 /// upload a file.  The multipart crate is used to encode the file, and
