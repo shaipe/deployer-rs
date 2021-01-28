@@ -134,7 +134,11 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
             .service(web::resource("/cmd").route(web::post().to(cmd::handler)))
             .service(web::resource("/git").route(web::post().to(git::handler)))
             .service(
-                web::resource("/upload").route(web::post().to(upload::handler)), // .route(web::post().to(upload::handler)),
+                web::resource("/upload").route(
+                    web::post().to(upload::handler)
+                ).route(
+                    web::get().to(upload::get)
+                ), // .route(web::post().to(upload::handler)),
             )
             .data(conf.workdir.clone())
             // .configure(app::service_config)
@@ -143,40 +147,3 @@ async fn start_web_server(conf_path: &str) -> std::io::Result<()> {
     .run()
     .await
 }
-
-// /// 首页
-// async fn index() -> HttpResponse {
-//     // Begin readme example
-//     // This will return an error if the command did not exit successfully
-//     // (controlled with the `check` field).
-//     let hello = match Command::with_args("bash", &["-c", "ls ; sleep 2; ls"])
-//         .enable_capture()
-//         .run()
-//     {
-//         Ok(s) => format!("{}", s.stdout_string_lossy()),
-//         Err(e) => {
-//             // println!("{:?}", e);
-//             format!("{:?}", e.to_string())
-//         }
-//     };
-
-//     // let hello = output.stdout_string_lossy();
-
-//     // println!("{}", hello);
-
-//     let html = format!(
-//         r#"<html>
-//     <head><title>Upload Test</title></head>
-//     <body>
-//         <div>{:?}</div>
-//         <form target="/" method="post" enctype="multipart/form-data">
-//             <input type="file" multiple name="file"/>
-//             <button type="submit">Submit</button>
-//         </form>
-//     </body>
-// </html>"#,
-//         hello
-//     );
-
-//     HttpResponse::Ok().body(html)
-// }
