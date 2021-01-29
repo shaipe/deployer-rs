@@ -64,14 +64,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (sub_cmd, sub_args) = matches.subcommand();
 
-    println!("Value for config: {}", conf_path);
+    let mut cf = conf_path.to_owned();
 
-    let cnf = match Config::new(conf_path) {
+    // 只有非调试模式下才使用下面的配置
+    if !cfg!(debug_assertions) {
+        // 给定了相对顶层路径时不处理
+        if !conf_path.starts_with("/") {
+            if let Ok(p) = std::env::current_exe() {
+                let workdir = format!("{}", p.parent().unwrap().display());
+                cf = format!("{}/{}", &workdir, conf_path.replace("./", ""));
+            }
+        }
+    }
+
+    println!("Value for config: {}", cf.clone());
+
+    let cnf = match Config::new(&cf) {
         Ok(c) => c,
         Err(_e) => panic!("配置文件加载错误."),
     };
 
-    println!("c::{:?}", cnf);
+    // println!("c::{:?}", cnf);
 
     // 对子命令进行处理
     if sub_cmd.len() > 0 {

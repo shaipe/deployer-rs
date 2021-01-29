@@ -13,7 +13,7 @@ pub async fn handler(
     payload: Multipart,
     // srv: web::Data<Addr<ws::WsServer>>,
 ) -> Result<HttpResponse, ActixError> {
-    println!("{:?}", req);
+    // println!("{:?}", req);
     use tube_value::{ToValue, Value};
     // let root_dir = format!("{}/userfiles", std::env::current_dir().unwrap().display());
     // println!("{}", root_dir);
