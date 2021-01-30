@@ -61,6 +61,19 @@ impl Service {
         Ok(res)
     }
 
+    /// 应用程序备份
+    pub fn unzip(&self, zip_file: &str) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
+        // 对服务进行应用和日志备份
+        
+        match tube::unzip(zip_file, &self.workdir) {
+            Ok(_) => res.push("unzip file successfully".to_owned()),
+            Err(err) => res.push(format!("error:{:?}", err)),
+        };
+
+        Ok(res)
+    }
+
     // /// 获取java包启动脚本
     // /// springboot应用程序部署脚本
     // /// 在使用maven进持package打包时，修改应用的pom文件，
