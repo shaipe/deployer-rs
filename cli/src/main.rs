@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(name) = sub_matches.value_of("name") {
                     if let Some(tsk) = cnf.get_task(name) {
                         let res = tsk.install();
-                        println!("{:?}", res);
+                        output_msg(res);
                     }
                 }
             }
@@ -105,14 +105,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(name) = sub_matches.value_of("name") {
                     if let Some(tsk) = cnf.get_task(name) {
                         let res = tsk.update();
-                        match res {
-                            Ok(t) => {
-                                for s in t {
-                                    println!("{}", s);
-                                }
-                            }
-                            Err(err) => println!("error: {}", err),
-                        }
+                        output_msg(res);
                     }
                 }
             }
@@ -165,6 +158,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // println!("自动更新命令完成...");
 
     Ok(())
+}
+
+fn output_msg(res: tube_error::Result<Vec<String>>) {
+    match res {
+        Ok(t) => {
+            for s in t {
+                println!("{}", s);
+            }
+        }
+        Err(err) => println!("error: {}", err),
+    }
 }
 
 // fn copy_file(

@@ -99,7 +99,7 @@ pub fn load_task(doc: &Yaml) -> Task {
         description: desc.clone(),
         app_type: app_type,
         app: app.clone(),
-        remote: load_remote(&doc["remote"]),
+        remote: load_remote(&app, &doc["remote"]),
         service: srv,
         docker: dock,
         start: vec_var_replace(doc["start"].get_vec(), replaces.clone()),
@@ -171,10 +171,16 @@ pub fn load_app(name: &str, symbol: &str, desc: &str, doc: &Yaml) -> App {
 }
 
 /// 加载远程处理配置
-pub fn load_remote(doc: &Yaml) -> Option<Remote> {
+pub fn load_remote(app: &App, doc: &Yaml) -> Option<Remote> {
     if doc.is_null() {
         return None;
     }
+    let replaces: HashMap<&str, String> =
+        [("$symbol", app.symbol.clone()), ("$name", app.name.clone())]
+            .iter()
+            .cloned()
+            .collect();
+
     Some(Remote {
         server: doc["server"].get_string("127.0.0.1"),
         port: if let Some(p) = doc["port"].as_i64() {
@@ -183,8 +189,8 @@ pub fn load_remote(doc: &Yaml) -> Option<Remote> {
             3000
         },
         workdir: doc["workdir"].get_string("."),
-        start: doc["start"].get_vec(),
-        end: doc["end"].get_vec(),
+        start: vec_var_replace(doc["start"].get_vec(), replaces.clone()),
+        end: vec_var_replace(doc["end"].get_vec(), replaces.clone()),
     })
 }
 
