@@ -234,14 +234,9 @@ impl Cmd {
                             Err(err) => res.push(format!("error: {}", err)),
                         }
 
-                        let workdir = match self.clone().workdir {
-                            Some(w) => w,
-                            None => ".".to_owned(),
-                        };
-
                         // 3. 文件覆盖
-                        match tube::unzip(&f_path, &workdir) {
-                            Ok(_) => res.push("unzip successfully".to_owned()),
+                        match srv.unzip(&f_path) {
+                            Ok(s) => res.extend(s),
                             Err(err) => res.push(format!("error: {}", err)),
                         };
 
@@ -281,15 +276,15 @@ impl Cmd {
                         let _ = std::fs::create_dir_all(&dir_path);
                         res.push(format!("crate dir {} successfully", wk));
                     }
-                    
+
                     // 获取文件名
-                    let file_name = match file_path.file_name(){
-                        Some(f)=>f.to_str().unwrap(),
-                        None => ""
+                    let file_name = match file_path.file_name() {
+                        Some(f) => f.to_str().unwrap(),
+                        None => "",
                     };
 
                     // 复制目标路径
-                    let to_file = format!("{}/{}", wk, file_name);                    
+                    let to_file = format!("{}/{}", wk, file_name);
                     // 2. 文件复制
                     match std::fs::copy(file_path, &to_file) {
                         Ok(_) => res.push(format!("copy {} successfully", f_path)),
