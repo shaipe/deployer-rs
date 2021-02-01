@@ -103,8 +103,8 @@ impl TaskService for Task {
 
             // 2. 调用执行远端命令
             if let Ok(relative_path) = up_res {
-                res.push(format!("upload file success path : {:?}", relative_path));
                 if relative_path.len() > 0 {
+                    res.push(format!("upload file success path : {:?}", relative_path));
                     let cmd_res = remote.call(serde_json::json!({
                         "symbol": self.symbol,
                         "name": self.name,
@@ -119,12 +119,16 @@ impl TaskService for Task {
                         "end": remote.end
                     }));
                     match cmd_res {
-                        Ok(s)=>{
+                        Ok(s) => {
                             res.extend(s);
                         }
                         Err(err) => println!("remote call error: {}", err),
                     }
+                } else {
+                    res.push("upload file failed!".to_owned());
                 }
+            } else {
+                res.push("upload file failed!".to_owned());
             }
         }
         Ok(res)

@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    println!("Value for config: {}", cf.clone());
+    // println!("Value for config: {}", cf.clone());
 
     let cnf = match Config::new(&cf) {
         Ok(c) => c,
