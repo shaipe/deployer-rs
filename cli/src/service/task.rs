@@ -99,6 +99,7 @@ impl TaskService for Task {
             let f_str = format!("{}/{}.zip", self.app.code_dir, self.name);
             let f_path = Path::new(&f_str);
             let name = f_path.file_stem().unwrap().to_str().unwrap();
+            println!("start upload file...");
             let up_res = remote.upload(name.to_owned(), f_path, None);
 
             // 2. 调用执行远端命令

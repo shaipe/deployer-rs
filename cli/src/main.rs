@@ -103,9 +103,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         else if sub_cmd == "update" {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
-                    if let Some(tsk) = cnf.get_task(name) {
-                        let res = tsk.update();
-                        output_msg(res);
+                    if name.to_lowercase() == "all" {
+                        for tsk in cnf.tasks{
+                            println!("start {} task process", tsk.name);
+                            let res = tsk.update();
+                            output_msg(res);
+                        }
+                    }
+                    else{
+                        if let Some(tsk) = cnf.get_task(name) {
+                            let res = tsk.update();
+                            output_msg(res);
+                        }
                     }
                 }
             }
