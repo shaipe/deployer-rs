@@ -103,33 +103,34 @@ impl TaskService for Task {
             let up_res = remote.upload(name.to_owned(), f_path, None);
 
             // 2. 调用执行远端命令
-            if let Ok(relative_path) = up_res {
-                if relative_path.len() > 0 {
-                    res.push(format!("upload file success path : {:?}", relative_path));
-                    let cmd_res = remote.call(serde_json::json!({
-                        "symbol": self.symbol,
-                        "name": self.name,
-                        "appType": self.app_type,
-                        "service": self.service,
-                        // "docker": Option<Docker>,
-                        "workdir": remote.workdir,
-                        "action": action,
-                        "filePath": relative_path,
-                        // "app": self.app, 远程不再接收
-                        "start": remote.start,
-                        "end": remote.end
-                    }));
-                    match cmd_res {
-                        Ok(s) => {
-                            res.extend(s);
+            match up_res {
+                Ok(relative_path) => {
+                    if relative_path.len() > 0 {
+                        res.push(format!("upload file success path : {:?}", relative_path));
+                        let cmd_res = remote.call(serde_json::json!({
+                            "symbol": self.symbol,
+                            "name": self.name,
+                            "appType": self.app_type,
+                            "service": self.service,
+                            // "docker": Option<Docker>,
+                            "workdir": remote.workdir,
+                            "action": action,
+                            "filePath": relative_path,
+                            // "app": self.app, 远程不再接收
+                            "start": remote.start,
+                            "end": remote.end
+                        }));
+                        match cmd_res {
+                            Ok(s) => {
+                                res.extend(s);
+                            }
+                            Err(err) => println!("remote call error: {}", err),
                         }
-                        Err(err) => println!("remote call error: {}", err),
+                    } else {
+                        res.push("upload file failed!".to_owned());
                     }
-                } else {
-                    res.push("upload file failed!".to_owned());
                 }
-            } else {
-                res.push("upload file failed!".to_owned());
+                Err(err) => res.push(format!("error:{}", err)),
             }
         }
         Ok(res)
