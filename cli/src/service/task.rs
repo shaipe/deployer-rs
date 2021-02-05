@@ -98,6 +98,9 @@ impl TaskService for Task {
             // 1. 复制并上传文件
             let f_str = format!("{}/{}.zip", self.app.code_dir, self.name);
             let f_path = Path::new(&f_str);
+            if !f_path.exists() {
+                return Err(error!("upload file not found"));
+            }
             let name = f_path.file_stem().unwrap().to_str().unwrap();
             println!("start upload file...");
             let up_res = remote.upload(name.to_owned(), f_path, None);
