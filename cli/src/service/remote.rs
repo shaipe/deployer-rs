@@ -49,6 +49,7 @@ impl RemoteService for Remote {
         let client = reqwest::blocking::Client::new();
         let requestbuilder = client
             .post(&format!("{}/upload", self.get_url()))
+            .timeout(std::time::Duration::from_secs(300))
             .multipart(form);
 
         // Send request
@@ -96,7 +97,8 @@ impl RemoteService for Remote {
         // Compose a request
         let client = reqwest::blocking::Client::new();
         let requestbuilder = client
-            .post(&format!("{}/cmd", self.get_url())).timeout(std::time::Duration::from_secs(300))
+            .post(&format!("{}/cmd", self.get_url()))
+            .timeout(std::time::Duration::from_secs(300))
             .json(&params);
 
         // Send request
