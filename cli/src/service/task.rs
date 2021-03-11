@@ -81,6 +81,7 @@ impl TaskService for Task {
         for cmd in &self.start {
             let c = cmd
                 .replace("$symbol", &self.symbol)
+                .replace("$version", &self.version)
                 .replace("$name", &self.name);
             if let Ok(x) = run_cmd(&c, &self.app.code_dir, false) {
                 res.extend(x);
@@ -160,7 +161,7 @@ pub(crate) fn run_cmd(
     env_dir: &str,
     enable_capture: bool,
 ) -> tube_error::Result<Vec<String>> {
-    use tube_cmd::Command;
+    use tube::cmd::Command;
     // let cmd = Command::with_args("bash", &["-c", "ls ; sleep 2; ls"]).set_dir(env_dir).add_args(&[cmd]);
     // 对操作系统进行判断
     let cmd_name = if cfg!(target_os = "Windows") {

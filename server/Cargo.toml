@@ -18,14 +18,12 @@ serde_json = "1.0.63"
 sanitize-filename = "0.3.0"
 yaml-rust = "0.4.5"
 oss = {version="0.1.0", path="../../oss"}
-tube={version="0.1.0", path="../../tube"}
+tube={version="0.1.0", path="../../tube", features=["cmd", "git"]}
 tube_error = {version="0.1.0", path="../../tube/error"}
 tube_value = { version = "0.1.0", path = "../../tube/value"}
-tube_cmd = {version="0.1.0", path="../../tube/cmd"}
 tube_web = { version="0.1.0", path="../../tube/web"}
 lazy_static = "1.4.0"
 micro_app = {version="0.1.0", path="../app"}
-tube_git = {version="0.1.0", path="../../tube/git"}
 log4rs = "1.0.0"
 log = "0.4.14"
 

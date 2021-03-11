@@ -72,12 +72,17 @@ pub fn load_tasks(doc: &Yaml) -> Vec<Task> {
 pub fn load_task(doc: &Yaml) -> Task {
     let name = doc["name"].get_string("");
     let symbol = doc["symbol"].get_string("");
+    let version = doc["version"].get_string("");
     let desc = doc["description"].get_string("");
     let app = load_app(&name, &symbol, &desc, &doc["app"]);
-    let replaces: HashMap<&str, String> = [("$symbol", symbol.clone()), ("$name", name.clone())]
-        .iter()
-        .cloned()
-        .collect();
+    let replaces: HashMap<&str, String> = [
+        ("$symbol", symbol.clone()),
+        ("$name", name.clone()),
+        ("$version", version.clone()),
+    ]
+    .iter()
+    .cloned()
+    .collect();
     let app_type = doc["type"].get_string("files");
     // 类型为服务时才加载服务信息
     let srv = if app_type == "service" {
@@ -96,6 +101,7 @@ pub fn load_task(doc: &Yaml) -> Task {
     Task {
         name: name.clone(),
         symbol: symbol.clone(),
+        version: version.clone(),
         description: desc.clone(),
         app_type: app_type,
         app: app.clone(),

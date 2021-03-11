@@ -12,6 +12,8 @@ pub struct Task {
     pub name: String,
     // 应用代号
     pub symbol: String,
+    // 应用版本
+    pub version: String,
     // 应用描述
     pub description: String,
     // 应用类型
@@ -29,4 +31,5 @@ pub struct Task {
     pub start: Vec<String>,
     // 结束执行
     pub end: Vec<String>,
+    
 }
