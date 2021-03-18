@@ -32,11 +32,11 @@ pub async fn handler(
                 Some(dir) => dir,
                 None => &workdir,
             };
-            let git = tube_git::Git::new(env_dir);
+            let git = tube::git::Git::new(env_dir);
             match action {
                 "clone" => {
                     if let Some(url) = val["url"].as_str() {
-                        match tube_git::Git::clone(env_dir, url, false) {
+                        match tube::git::Git::clone(env_dir, url, false) {
                             Ok(r) => res.extend(r),
                             Err(e) => res.push(format!("error:{}", e)),
                         }
