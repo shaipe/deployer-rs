@@ -21,6 +21,8 @@ pub struct App {
     pub version: String,
     // 应用开发语言
     pub lang: String,
+    // 目录操作系统
+    pub os: String,
 }
 
 impl App {
@@ -38,6 +40,7 @@ impl App {
             ),
             version: "0.1.0".to_owned(),
             lang: "java".to_owned(),
+            os: "linux".to_owned(),
         }
     }
 
@@ -74,9 +77,10 @@ impl App {
         if &self.lang == "java" {
             ".jar"
         } else {
-            if cfg!(target_os = "windows") {
+            // 此处不应该用target_os,这里是指上传时的平台
+            if &self.os == "windows" {
                 ".exe"
-            } else if cfg!(target_os = "macos") {
+            } else if &self.os == "macos" {
                 ".app"
             } else {
                 ""

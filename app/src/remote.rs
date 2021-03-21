@@ -23,12 +23,17 @@ impl Remote {
     /// 根据配置获url
     pub fn get_url(&self) -> String {
         // 判断处理端口问题
-        let port_str = if self.port > 0 {
+        let port_str = if self.port > 0 && self.port != 80 && self.port != 443 {
             format!(":{}", self.port)
         } else {
             "".to_owned()
         };
 
-        format!("http://{}{}", self.server, port_str)
+        let mut protocol = "http";
+        if self.port == 443 {
+            protocol = "https"
+        }
+
+        format!("{}://{}{}", protocol, self.server, port_str)
     }
 }
