@@ -4,6 +4,7 @@
 
 use super::RemoteService;
 use crate::config::Task;
+use std::path::Path;
 use tube_error::Result;
 
 /// 对app应用处理
@@ -12,11 +13,17 @@ pub trait TaskService {
     fn install(&self) -> Result<Vec<String>>;
     /// 更新应用任务
     fn update(&self) -> Result<Vec<String>>;
+    /// 获取远程代码
+    fn pull(&self) -> Result<Vec<String>>;
 
+    /// 替换配置信息
+    fn configure(&self);
+
+    /// 开始执行命令
     fn start(&self) -> Result<Vec<String>>;
-
+    /// 进行远程处理
     fn remote(&self, action: &str) -> Result<Vec<String>>;
-
+    /// 处理结束
     fn end(&self) -> Result<Vec<String>>;
 }
 
@@ -24,11 +31,17 @@ impl TaskService for Task {
     /// 开始命令执行
     fn install(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
-        // 1. 本地打包
+        // 1. 获取远程代码
+        if let Ok(s) = self.pull() {
+            println!("{}", s.join("\n"));
+        }
+        // 2. 替换配置文件
+        self.configure();
+        // 3. 运行本地打包命令
         match self.start() {
             Ok(s) => {
                 res.extend(s);
-                // 2. 上传并进行远程处理
+                // 4. 上传并进行远程处理
                 match self.remote("install") {
                     Ok(rs) => {
                         res.extend(rs);
@@ -51,11 +64,17 @@ impl TaskService for Task {
     /// 开始命令执行
     fn update(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
-        // 1. 本地打包
+        // 1. 获取远程代码
+        if let Ok(s) = self.pull() {
+            println!("{}", s.join("\n"));
+        }
+        // 2. 替换配置文件
+        self.configure();
+        // 3. 运行本地打包命令
         match self.start() {
             Ok(s) => {
                 res.extend(s);
-                // 2. 上传并进行远程处理
+                // 4. 上传并进行远程处理
                 match self.remote("update") {
                     Ok(rs) => {
                         res.extend(rs);
@@ -73,6 +92,27 @@ impl TaskService for Task {
         }
 
         Ok(res)
+    }
+
+    /// 拉取代码 1. 默认不提交本地更改，直接执行 git checkout . 2. git pull
+    fn pull(&self) -> Result<Vec<String>> {
+        let git = tube::git::Git::new(&self.app.conf_dir);
+        // 回滚所有的修改
+        let _x = git.checkout(".");
+        let _y = git.pull();
+        Ok(vec![])
+    }
+
+    /// 配置信息处理
+    fn configure(&self) {
+        let src = &self.app.conf_dir;
+        if src.len() > 0 && src != "." && src != "./" {
+            let src_path = Path::new(src);
+            let dest_path = Path::new(&self.app.code_dir);
+            if tube::fs::copy_dir(src_path, dest_path).is_ok() {
+                println!("配置文件替换成功.")
+            }
+        }
     }
 
     /// 开始命令执行
@@ -93,7 +133,6 @@ impl TaskService for Task {
     /// 远程相关处理
 
     fn remote(&self, action: &str) -> Result<Vec<String>> {
-        use std::path::Path;
         let mut res = Vec::new();
         if let Some(remote) = self.remote.clone() {
             // 1. 复制并上传文件

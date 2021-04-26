@@ -173,6 +173,7 @@ pub fn load_app(name: &str, symbol: &str, desc: &str, doc: &Yaml) -> App {
         version: doc["version"].get_string("0.1.0"),
         lang: doc["lang"].get_string("rust"),
         code_dir: doc["code_dir"].get_string("."),
+        conf_dir: doc["conf_dir"].get_string(""),
         os: doc["os"].get_string("linux")
     }
 }

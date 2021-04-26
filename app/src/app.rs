@@ -17,6 +17,8 @@ pub struct App {
     pub description: String,
     // 代码目录
     pub code_dir: String,
+    // 配置文件存放目录
+    pub conf_dir: String,
     // 当前版本
     pub version: String,
     // 应用开发语言
@@ -38,6 +40,7 @@ impl App {
                 symbol = symbol,
                 name = name
             ),
+            conf_dir: "".to_owned(),
             version: "0.1.0".to_owned(),
             lang: "java".to_owned(),
             os: "linux".to_owned(),
