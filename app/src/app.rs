@@ -25,6 +25,22 @@ pub struct App {
     pub lang: String,
     // 目录操作系统
     pub os: String,
+    
+}
+
+impl std::default::Default for App {
+    fn default() -> App {
+        App {
+            symbol: "".to_owned(),
+            name: "".to_owned(),
+            description: "".to_owned(),
+            code_dir: "/srv".to_owned(),
+            conf_dir: "".to_owned(),
+            version: "0.1.0".to_owned(),
+            lang: "java".to_owned(),
+            os: "linux".to_owned(),
+        }
+    }
 }
 
 impl App {

@@ -154,12 +154,14 @@ pub fn load_service(app: &App, doc: &Yaml) -> Option<Service> {
         }
         // 处理服务执行参数
         let arg = var_replace(doc["args"].get_string(""), replaces.clone());
+        let assist = doc["command"].get_string("");
         Some(Service {
             name: srv_name,
             exec: exec,
             args: if arg.len() > 0 { Some(arg) } else { None },
             workdir: workdir,
             timeout: 60,
+            assist_start: if assist.len() > 0 { Some(assist) } else { None },
         })
     }
 }

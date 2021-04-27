@@ -4,7 +4,9 @@
 //! create by shaipe 202101021
 
 use super::cmd::run_cmd;
+use super::JavaService;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tube_error::Result;
 
 /// 服务结构体
@@ -20,6 +22,8 @@ pub struct Service {
     pub exec: String,
     // 启动参数
     pub args: Option<String>,
+    // 辅助启动命令
+    pub assist_start: Option<String>,
 }
 
 /// 服务方法实现
@@ -33,6 +37,7 @@ impl Service {
             workdir: workdir.to_owned(),
             exec: cmd.to_owned(),
             args: None,
+            assist_start: None,
         }
     }
 
@@ -44,13 +49,28 @@ impl Service {
             if let Some(arg) = self.args.clone() {
                 cmd = format!("{} {}", self.exec, arg);
             }
-            match Service::install_linux_service(
-                &self.workdir,
-                &self.name,
-                &cmd,
-                self.timeout,
-            ){
-                Ok(s)=>res.push(s),
+
+            // 获取可执行文件的类型
+            let exec_type = get_extension(&self.exec);
+            if exec_type.to_lowercase() == ".jar" {
+                // 给上传的文件可执行权限
+                if let Ok(_r) = run_cmd(&format!("chmod 777 {}", self.exec), "", true) {
+                    res.push("chmod permission successfully!".to_owned());
+                }
+                let ass = if let Some(x) = self.assist_start.clone() {
+                    format!("{} ", x)
+                } else {
+                    "".to_owned()
+                };
+                let start_cmd = format!("{}{}", ass, self.exec);
+                // jar 类型文件处理
+                cmd = format!("{}/start.sh", self.workdir);
+                // 写入脚本并给予权限
+                res.extend(JavaService::service_shell(&cmd, &self.name, &start_cmd));
+            }
+
+            match Service::install_linux_service(&self.workdir, &self.name, &cmd, self.timeout) {
+                Ok(s) => res.push(s),
                 Err(err) => res.push(format!("error: {}", err)),
             };
         } else if cfg!(target_os = "windows") {
@@ -65,7 +85,7 @@ impl Service {
     pub fn unzip(&self, zip_file: &str) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         // 对服务进行应用和日志备份
-        
+
         match tube::unzip(zip_file, &self.workdir) {
             Ok(_) => res.push("unzip file successfully".to_owned()),
             Err(err) => res.push(format!("error:{:?}", err)),
@@ -214,4 +234,15 @@ WantedBy=multi-user.target
         }
         Err(error!("status failed"))
     }
+}
+
+fn get_extension(path_str: &str) -> String {
+    let mut res = String::new();
+    let p = Path::new(path_str);
+    if let Some(ext) = p.extension() {
+        if let Some(t) = ext.to_str() {
+            res = t.to_owned();
+        }
+    }
+    res
 }
