@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! 业务逻辑处理模块
 //! create by shaipe 20210125
 

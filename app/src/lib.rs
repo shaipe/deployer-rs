@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! 系统服务
 //! create by shaipe 202101021
 
@@ -15,12 +15,14 @@ mod app;
 mod pool;
 mod docker;
 mod remote;
+mod java_service;
 
 pub use service::Service;
 pub use app::App;
 pub use pool::Pool;
 pub use docker::Docker;
 pub use remote::Remote;
+pub use java_service::JavaService;
 
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! GIT Hooks 及GIT相关工具处理
 //! create by shaipe 20210102
 

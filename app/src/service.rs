@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! Linux 服务处理
 //! linux 服务存放位置 /lib/systemd/system/{name}.service
 //! create by shaipe 202101021

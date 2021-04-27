@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! 使用yml格式的配置中加载
 //! create by shaipe 20210125
 

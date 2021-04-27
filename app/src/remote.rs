@@ -1,4 +1,4 @@
-//! copyright © shaipe 2021 - present
+//! copyright © ecdata.cn 2021 - present
 //! 远程服务器配置信息
 //! create by shaipe 20210124
 
