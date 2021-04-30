@@ -39,8 +39,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .short("n")
                         .long("name")
                         // .value_name("FILE")
-                        // .help("set name of program")
+                        .help("需要处理的任务名，all为全部任务，可以和e参数配合排除")
                         .takes_value(true),
+                ).arg(
+                    Arg::with_name("exclude")
+                        .short("e")
+                        .long("exclude")
+                        .takes_value(true)
+                        .help("输入需要排队的任务名，多个用逗号隔开。"),
                 ),
         )
         .subcommand(
@@ -52,9 +58,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Arg::with_name("name")
                         .short("n")
                         .long("name")
-                        // .value_name("FILE")
-                        // .help("set name of program")
-                        .takes_value(true),
+                        .takes_value(true)
+                        .help("需要处理的任务名，all为全部任务，可以和e参数配合排除"),
+                )
+                .arg(
+                    Arg::with_name("exclude")
+                        .short("e")
+                        .long("exclude")
+                        .takes_value(true)
+                        .help("输入需要排队的任务名，多个用逗号隔开。"),
                 ),
         )
         .get_matches();
@@ -92,7 +104,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if sub_cmd == "install" {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
-                    if let Some(tsk) = cnf.get_task(name) {
+                    if name.to_lowercase() == "all" {
+                        // 获取要排除的任务名
+                        let ss = match sub_matches.value_of("exclude") {
+                            Some(s) => s.split(",").map(|s| s.to_lowercase()).collect(),
+                            None => vec![],
+                        };
+                        for tsk in cnf.tasks {
+                            if ss.contains(&tsk.name.clone()) {
+                                println!("exclude task {} ...", tsk.name);
+                            } else {
+                                println!("start {} task process", tsk.name);
+                                let res = tsk.install();
+                                output_msg(res);
+                            }
+                        }
+                    } else if let Some(tsk) = cnf.get_task(name) {
                         let res = tsk.install();
                         output_msg(res);
                     }
@@ -104,13 +131,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
                     if name.to_lowercase() == "all" {
-                        for tsk in cnf.tasks{
-                            println!("start {} task process", tsk.name);
-                            let res = tsk.update();
-                            output_msg(res);
+                        // 获取要排除的任务名
+                        let ss = match sub_matches.value_of("exclude") {
+                            Some(s) => s.split(",").map(|s| s.to_lowercase()).collect(),
+                            None => vec![],
+                        };
+                        for tsk in cnf.tasks {
+                            if ss.contains(&tsk.name.clone()) {
+                                println!("exclude task {} ...", tsk.name);
+                            } else {
+                                println!("start {} task process", tsk.name);
+                                let res = tsk.update();
+                                output_msg(res);
+                            }
                         }
-                    }
-                    else{
+                    } else {
                         if let Some(tsk) = cnf.get_task(name) {
                             let res = tsk.update();
                             output_msg(res);
