@@ -30,6 +30,7 @@ pub trait TaskService {
 impl TaskService for Task {
     /// 开始命令执行
     fn install(&self) -> Result<Vec<String>> {
+        // println!("install ..." );
         let mut res: Vec<String> = Vec::new();
         // 1. 获取远程代码
         if let Ok(s) = self.pull() {

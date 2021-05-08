@@ -98,12 +98,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // println!("c::{:?}", cnf);
 
+    println!("start sub command {} ...", sub_cmd);
+
     // 对子命令进行处理
     if sub_cmd.len() > 0 {
         // 应用安装
         if sub_cmd == "install" {
             if let Some(sub_matches) = sub_args {
                 if let Some(name) = sub_matches.value_of("name") {
+                    // println!("name {}", name);
                     if name.to_lowercase() == "all" {
                         // 获取要排除的任务名
                         let ss = match sub_matches.value_of("exclude") {
@@ -122,6 +125,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     } else if let Some(tsk) = cnf.get_task(name) {
                         let res = tsk.install();
                         output_msg(res);
+                    }
+                    else{
+                        println!("not found task {}", name);
                     }
                 }
             }

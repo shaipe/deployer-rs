@@ -7,11 +7,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::result::Result;
 
-
 mod task;
 mod yaml;
 pub(crate) use task::Task;
-use yaml::{YamlImpl,load_tasks};
+use yaml::{load_tasks, YamlImpl};
 
 /// 配置信息
 #[derive(Debug, Clone)]
@@ -21,9 +20,9 @@ pub struct Config {
     pub tasks: Vec<Task>,
 }
 
-
 impl Config {
     pub fn new(conf_path: &str) -> Result<Config, Box<dyn Error>> {
+        // println!("config path: {}", conf_path);
         // open file
         let mut f = match File::open(conf_path) {
             Ok(f) => f,
@@ -34,6 +33,8 @@ impl Config {
         let mut s = String::new();
         f.read_to_string(&mut s).unwrap(); // read file content to s
                                            // load string to yaml loader
+
+        // println!("{}", s);
         let docs = yaml_rust::yaml::YamlLoader::load_from_str(&s).unwrap();
         // get first yaml hash doc
         let yaml_doc = &docs[0];
