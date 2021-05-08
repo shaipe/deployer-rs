@@ -52,10 +52,11 @@ impl Service {
 
             // 获取可执行文件的类型
             let exec_type = get_extension(&self.exec);
-            if exec_type.to_lowercase() == ".jar" {
+            println!("exec_type {}", exec_type);
+            if exec_type.to_lowercase() == "jar" {
                 // 给上传的文件可执行权限
                 if let Ok(_r) = run_cmd(&format!("chmod 777 {}", self.exec), "", true) {
-                    res.push("chmod permission successfully!".to_owned());
+                    res.push(format!("chmod {} permission successfully!", self.exec));
                 }
                 let ass = if let Some(x) = self.assist_start.clone() {
                     format!("{} ", x)
@@ -195,8 +196,8 @@ WantedBy=multi-user.target
         // println!("{}\n{}", path, srv_content);
         // 把文件写入服务
         tube::fs::write_file(&path, &srv_content.as_bytes());
+        
         // 设置应用为自启动
-
         if let Ok(_r) = run_cmd(&format!("systemctl enable {}", name), "", true) {
             return Ok("install service successfully!".to_owned());
         }
