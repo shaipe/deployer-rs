@@ -26,6 +26,7 @@ lazy_static = "1.4.0"
 micro_app = {version="0.1.0", path="../app"}
 log4rs = "1.0.0"
 log = "0.4.14"
+logs = {version="0.1.0", path="../logs"}
 
 
 [[bin]]

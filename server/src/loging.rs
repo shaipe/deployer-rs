@@ -1,3 +1,7 @@
+//! copyright © ecdata.cn 2021 - present
+//! 服务处理日志信息记录
+//! created by shaipe 20210327
+
 use log::LevelFilter;
 use log4rs::{
     append::{console::ConsoleAppender, file::FileAppender},

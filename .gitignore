@@ -8,5 +8,5 @@
 tmp/
 *.txt
 *.json
-
+log/
 **/userfiles
