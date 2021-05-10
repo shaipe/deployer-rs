@@ -2,6 +2,8 @@
 //! 使用yml格式的配置中加载
 //! create by shaipe 20210125
 
+use std::path::Path;
+
 use super::Log;
 use yaml_rust::Yaml;
 
@@ -72,17 +74,14 @@ pub fn load_log(doc: &Yaml) -> Log {
     let title = doc["title"].get_string("");
     let server = doc["server"].get_string("");
     let dir = doc["dir"].get_string("");
+    let extension = doc["extension"].get_string("log");
 
     Log {
         name: name,
         title: title,
         server: server,
         dir: dir.clone(),
-        logs: load_log_files(&dir),
+        extension: extension,
+        // logs: tube::fs::walk_dir(Path::new(&dir)),
     }
-}
-
-
-pub fn load_log_files(log_dir: &str) -> Vec<String> {
-    vec![]
 }

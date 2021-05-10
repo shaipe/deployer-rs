@@ -15,7 +15,7 @@ bytes = "1.0.1"
 clap = "2.33.3"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_json = "1.0.64"
-sanitize-filename = "0.3.0"
+# sanitize-filename = "0.3.0"
 yaml-rust = "0.4.5"
 oss = {version="0.1.0", path="../../oss"}
 tube={version="0.1.0", path="../../tube", features=["cmd", "git"]}
