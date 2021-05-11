@@ -71,6 +71,7 @@ impl TaskService for Task {
         }
         // 2. 替换配置文件
         self.configure();
+        // return Ok(res);
         // 3. 运行本地打包命令
         match self.start() {
             Ok(s) => {
@@ -97,11 +98,17 @@ impl TaskService for Task {
 
     /// 拉取代码 1. 默认不提交本地更改，直接执行 git checkout . 2. git pull
     fn pull(&self) -> Result<Vec<String>> {
-        let git = tube::git::Git::new(&self.app.conf_dir);
+        let mut res = Vec::new();
+        let git = tube::git::Git::new(&self.app.code_dir);
+
         // 回滚所有的修改
-        let _x = git.checkout(".");
-        let _y = git.pull();
-        Ok(vec![])
+        if let Ok(x) = git.checkout("."){
+            res.extend(x);
+        }
+        if let Ok(y) = git.pull(){
+            res.extend(y);
+        }
+        Ok(res)
     }
 
     /// 配置信息处理
@@ -143,7 +150,7 @@ impl TaskService for Task {
                 return Err(error!("upload file not found"));
             }
             let name = f_path.file_stem().unwrap().to_str().unwrap();
-            println!("start upload file...");
+            println!("start upload to {} file...", remote.get_url());
             let up_res = remote.upload(name.to_owned(), f_path, None);
 
             // 2. 调用执行远端命令
