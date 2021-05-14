@@ -10,5 +10,5 @@ edition = "2018"
 yaml-rust = "0.4.5"
 tube = {version="0.1.0", path="../../tube"}
 lazy_static = "1.4.0"
-serde = { version = "1.0.125", features = ["derive"] }
+serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.64"
