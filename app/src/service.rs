@@ -152,17 +152,25 @@ impl Service {
         Ok(res)
     }
 
-    // pub fn uninstall(&self) -> Result<bool> {
-    //     match Service::stop(&self.name) {
-    //         Ok(_) => {
-    //             std::fs::remove_file(format!(
-    //                 "/lib/systemd/system/{name}.service",
-    //                 name = self.name
-    //             ));
-    //         }
-    //         Err(err) => Err(err),
-    //     }
-    // }
+    /// 删除linux服务
+    pub fn uninstall_linux_service(name: &str) -> Result<bool> {
+        println!("uninstall name of {}", name);
+        match Service::stop(name) {
+            Ok(_) => {
+                if std::fs::remove_file(format!(
+                    "/lib/systemd/system/{name}.service",
+                    name = name
+                ))
+                .is_ok()
+                {
+                    Ok(true)
+                } else {
+                    Err(error!("删除服务失败!"))
+                }
+            }
+            Err(err) => Err(err),
+        }
+    }
 
     /// Linuxt系统服务安装
     pub fn install_linux_service(
@@ -196,7 +204,7 @@ WantedBy=multi-user.target
         // println!("{}\n{}", path, srv_content);
         // 把文件写入服务
         tube::fs::write_file(&path, &srv_content.as_bytes());
-        
+
         // 设置应用为自启动
         if let Ok(_r) = run_cmd(&format!("systemctl enable {}", name), "", true) {
             return Ok("install service successfully!".to_owned());

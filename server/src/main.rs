@@ -90,7 +90,19 @@ async fn main() -> std::io::Result<()> {
             //     Err(err) => println!("install deployer_server service failed:: {}", err)
             // }
         } else if sub_cmd == "uninstall" {
-            println!("uninstall");
+            println!("uninstall ... ");
+            match std::env::current_exe() {
+                Ok(p) => {
+                    let name = p.file_name().unwrap().to_str().unwrap();
+                    
+                    // 卸载服务
+                    match micro_app::Service::uninstall_linux_service(name) {
+                        Ok(v) => println!("uninstall {} service {}", name, v),
+                        Err(err) => println!("uninstall service failed: {}", err),
+                    }
+                }
+                Err(e) => println!("{:?}", e),
+            }
         }
         return Ok(());
     }

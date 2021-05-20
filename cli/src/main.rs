@@ -160,6 +160,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+        else if sub_cmd == "uninstall" {
+            if let Some(sub_matches) = sub_args {
+                if let Some(name) = sub_matches.value_of("name") {
+                    if name.to_lowercase() == "all" {
+                        // 获取要排除的任务名
+                        let ss = match sub_matches.value_of("exclude") {
+                            Some(s) => s.split(",").map(|s| s.to_lowercase()).collect(),
+                            None => vec![],
+                        };
+                        for tsk in cnf.tasks {
+                            if ss.contains(&tsk.name.clone()) {
+                                println!("exclude task {} ...", tsk.name);
+                            } else {
+                                println!("start {} task process", tsk.name);
+                                let res = tsk.update();
+                                output_msg(res);
+                            }
+                        }
+                    } else {
+                        if let Some(tsk) = cnf.get_task(name) {
+                            let res = tsk.update();
+                            output_msg(res);
+                        }
+                    }
+                }
+            }
+        }
         // 执行子命令结束
         return Ok(());
     }

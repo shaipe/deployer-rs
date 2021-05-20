@@ -84,6 +84,7 @@ pub async fn handler(
 
 /// 命令处理
 /// WebHook 简介 Gitee WebHook 功能是帮助用户 push 代码后，自动回调一个您设定的 http 地址。
+#[allow(dead_code)]
 pub async fn hook(
     _req: HttpRequest,
     mut payload: web::Payload,

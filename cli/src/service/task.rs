@@ -11,8 +11,13 @@ use tube_error::Result;
 pub trait TaskService {
     /// 安装应用
     fn install(&self) -> Result<Vec<String>>;
+
     /// 更新应用任务
     fn update(&self) -> Result<Vec<String>>;
+
+    /// 卸载服务
+    fn uninstall(&self) -> Result<Vec<String>>;
+
     /// 获取远程代码
     fn pull(&self) -> Result<Vec<String>>;
 
@@ -93,6 +98,24 @@ impl TaskService for Task {
             Err(err) => res.push(format!("error:{}", err)),
         }
 
+        Ok(res)
+    }
+
+    /// 卸载远程服务
+    fn uninstall(&self) -> Result<Vec<String>> {
+        let mut res: Vec<String> = Vec::new();
+        match self.remote("uninstall") {
+            Ok(rs) => {
+                res.extend(rs);
+                match self.end() {
+                    Ok(es) => {
+                        res.extend(es);
+                    }
+                    Err(err) => res.push(format!("error:{}", err)),
+                }
+            }
+            Err(err) => res.push(format!("error:{}", err)),
+        }
         Ok(res)
     }
 
