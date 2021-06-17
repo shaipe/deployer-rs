@@ -6,6 +6,8 @@ use actix_web::{web, Error as ActixError, HttpRequest, HttpResponse};
 use micro_app::{Docker, Service};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::time::Duration;
+use std::thread;
 
 /// 命令处理
 pub async fn handler(
@@ -227,6 +229,9 @@ impl Cmd {
                             Ok(_v) => res.push("stop service successfully".to_owned()),
                             Err(err) => res.push(format!("error: {}", err)),
                         }
+
+                        // 延迟1秒现进行程序更新
+                        thread::sleep(Duration::from_millis(1000));
 
                         // 2. 备份原程序
                         match srv.backup() {
