@@ -14,6 +14,8 @@ pub struct Task {
     pub symbol: String,
     // 应用版本
     pub version: String,
+    // 是否获取代码
+    pub pull_code: bool,
     // 应用描述
     pub description: String,
     // 应用类型

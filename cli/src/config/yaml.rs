@@ -28,7 +28,7 @@ impl YamlImpl for Yaml {
 
     /// 获取bool型
     fn get_bool(&self) -> bool {
-        println!("{:?}", self);
+        // println!("{:?}", self);
         if let Some(v) = self.as_bool() {
             v
         } else {
@@ -102,6 +102,7 @@ pub fn load_task(doc: &Yaml) -> Task {
         name: name.clone(),
         symbol: symbol.clone(),
         version: version.clone(),
+        pull_code: doc["pull_code"].get_bool(),
         description: desc.clone(),
         app_type: app_type,
         app: app.clone(),
@@ -176,7 +177,7 @@ pub fn load_app(name: &str, symbol: &str, desc: &str, doc: &Yaml) -> App {
         lang: doc["lang"].get_string("rust"),
         code_dir: doc["code_dir"].get_string("."),
         conf_dir: doc["conf_dir"].get_string(""),
-        os: doc["os"].get_string("linux")
+        os: doc["os"].get_string("linux"),
     }
 }
 

@@ -71,6 +71,7 @@ impl TaskService for Task {
     fn update(&self) -> Result<Vec<String>> {
         let mut res: Vec<String> = Vec::new();
         // 1. 获取远程代码
+
         if let Ok(s) = self.pull() {
             println!("{}", s.join("\n"));
         }
@@ -122,14 +123,18 @@ impl TaskService for Task {
     /// 拉取代码 1. 默认不提交本地更改，直接执行 git checkout . 2. git pull
     fn pull(&self) -> Result<Vec<String>> {
         let mut res = Vec::new();
-        let git = tube::git::Git::new(&self.app.code_dir);
+        // println!("pull {:?}", self.pull_code);
+        // 判断是否需要拉取代码
+        if self.pull_code {
+            let git = tube::git::Git::new(&self.app.code_dir);
 
-        // 回滚所有的修改
-        if let Ok(x) = git.checkout("."){
-            res.extend(x);
-        }
-        if let Ok(y) = git.pull(){
-            res.extend(y);
+            // 回滚所有的修改
+            if let Ok(x) = git.checkout(".") {
+                res.extend(x);
+            }
+            if let Ok(y) = git.pull() {
+                res.extend(y);
+            }
         }
         Ok(res)
     }
