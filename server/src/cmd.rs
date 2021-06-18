@@ -236,19 +236,19 @@ impl Cmd {
                         // 2. 备份原程序
                         match srv.backup() {
                             Ok(_v) => res.push("backup service successfully".to_owned()),
-                            Err(err) => res.push(format!("error: {}", err)),
+                            Err(err) => res.push(format!("update backup error: {}", err)),
                         }
 
                         // 3. 文件覆盖
                         match srv.unzip(&f_path) {
                             Ok(s) => res.extend(s),
-                            Err(err) => res.push(format!("error: {}", err)),
+                            Err(err) => res.push(format!("update unzip error: {}", err)),
                         };
 
                         // 4. 启动服务
                         match Service::start(&srv.name) {
                             Ok(_v) => res.push("start service successfully".to_owned()),
-                            Err(err) => res.push(format!("error: {}", err)),
+                            Err(err) => res.push(format!("update start error: {}", err)),
                         }
                     }
                 }

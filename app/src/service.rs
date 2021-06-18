@@ -52,7 +52,7 @@ impl Service {
 
             // 获取可执行文件的类型
             let exec_type = get_extension(&self.exec);
-            println!("exec_type {}", exec_type);
+            // println!("exec_type {}", exec_type);
             if exec_type.to_lowercase() == "jar" {
                 // 给上传的文件可执行权限
                 if let Ok(_r) = run_cmd(&format!("chmod 777 {}", self.exec), "", true) {
@@ -72,7 +72,7 @@ impl Service {
 
             match Service::install_linux_service(&self.workdir, &self.name, &cmd, self.timeout) {
                 Ok(s) => res.push(s),
-                Err(err) => res.push(format!("error: {}", err)),
+                Err(err) => res.push(format!("install service error: {}", err)),
             };
         } else if cfg!(target_os = "windows") {
             res.push("Hello Windows".to_owned());
@@ -89,7 +89,7 @@ impl Service {
 
         match tube::unzip(zip_file, &self.workdir) {
             Ok(_) => res.push("unzip file successfully".to_owned()),
-            Err(err) => res.push(format!("error:{:?}", err)),
+            Err(err) => res.push(format!("unzip to {}, error:{:?}", &self.workdir, err)),
         };
 
         Ok(res)
@@ -137,10 +137,17 @@ impl Service {
         // 对服务进行应用和日志备份
 
         let bak_path = format!("{}.bak", self.exec);
-        match std::fs::copy(&self.exec, bak_path) {
+        // match std::fs::copy(&self.exec, bak_path) {
+        //     Ok(_) => res.push("backup app file successfully".to_owned()),
+        //     Err(err) => res.push(format!("backup error:{:?}", err)),
+        // };
+
+
+        match std::fs::rename(&self.exec, bak_path) {
             Ok(_) => res.push("backup app file successfully".to_owned()),
-            Err(err) => res.push(format!("error:{:?}", err)),
+            Err(err) => res.push(format!("backup error:{:?}", err)),
         };
+
 
         // let log_path = format!("{}/{}.log", self.workdir, self.name);
         // let bak_log_path = format!("{}/log/{}_{}.log", self.workdir, self.name, 333);
@@ -157,11 +164,8 @@ impl Service {
         println!("uninstall name of {}", name);
         match Service::stop(name) {
             Ok(_) => {
-                if std::fs::remove_file(format!(
-                    "/lib/systemd/system/{name}.service",
-                    name = name
-                ))
-                .is_ok()
+                if std::fs::remove_file(format!("/lib/systemd/system/{name}.service", name = name))
+                    .is_ok()
                 {
                     Ok(true)
                 } else {
